@@ -71,6 +71,7 @@ class PartyRole(str, Enum):
     REPAIR_SHOP = "repair_shop"
     PARTS_SUPPLIER = "parts_supplier"
     LIENHOLDER = "lienholder"
+    RENTAL_PROVIDER = "rental_provider"
 
 
 class PartyStatus(str, Enum):

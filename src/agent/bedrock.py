@@ -70,18 +70,24 @@ def triage_fnol_vision(image_bytes: bytes, *, content_type: str = "image/jpeg",
     mid = os.environ.get("BEDROCK_VISION_MODEL_ID",
                          os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-pro-v1:0"))
     system = (
-        "You are an expert auto-insurance FNOL damage assessor. Assess the vehicle "
-        "damage visible IN THE PHOTO. Respond ONLY with compact JSON: "
-        '{"severity":"minor|moderate|severe","drivable":true|false,'
+        "You are an expert auto-insurance FNOL damage assessor. FIRST decide "
+        "whether the photo actually shows a VEHICLE (or vehicle damage). Respond "
+        "ONLY with compact JSON: "
+        '{"valid":true|false,"reject_reason":"<if invalid, one short sentence: '
+        'what the image shows and why it cannot be assessed>",'
+        '"severity":"minor|moderate|severe","drivable":true|false,'
         '"est_repair_days":<int>,"damage":"<visible damage, few words>",'
         '"reasoning":"<one sentence describing what is visible in the image>",'
         '"summary":"<one line>"}. '
-        "Judge from visible evidence: deployed airbags, fluid leaks, wheel/axle/"
-        "frame damage or a crushed cabin => severe & not drivable; cosmetic scuffs "
-        "=> minor & drivable. The reasoning must describe the photo, not restate the "
-        "customer note."
+        "If the image is NOT a vehicle (e.g. a person, animal, screenshot, blank "
+        "or unrelated photo), set valid=false, give a reject_reason, and set "
+        "severity to \"minor\" as a placeholder (it will be ignored). "
+        "If it IS a vehicle, set valid=true and judge from visible evidence: "
+        "deployed airbags, fluid leaks, wheel/axle/frame damage or a crushed cabin "
+        "=> severe & not drivable; cosmetic scuffs => minor & drivable. The "
+        "reasoning must describe the photo, not restate the customer note."
     )
-    user_text = f"Peril: {peril}. Assess the vehicle damage in this photo." + (
+    user_text = f"Peril: {peril}. First check the photo is a vehicle, then assess damage." + (
         f" Customer note: {note}" if note else "")
     resp = _client().converse(
         modelId=mid,
@@ -109,6 +115,10 @@ def triage_fnol_vision(image_bytes: bytes, *, content_type: str = "image/jpeg",
     data["drivable"] = bool(extra.get("drivable", sev not in ("severe", "major", "total")))
     data["damage"] = str(extra.get("damage", "")).strip()
     data["reasoning"] = str(extra.get("reasoning", "")).strip()
+    # Image-validity gate: default to valid=true only when the model clearly said
+    # so; treat an explicit false as a rejection the caller must honor.
+    data["valid"] = bool(extra.get("valid", True))
+    data["reject_reason"] = str(extra.get("reject_reason", "")).strip()
     data["source"] = "bedrock-vision"
     return data
 

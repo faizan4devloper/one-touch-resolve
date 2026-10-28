@@ -95,6 +95,43 @@ def test_parts_backorder_blocks_the_gate():
     assert PartyRole.PARTS_SUPPLIER.value in gate["blocked"]
 
 
+def test_repeated_gate_eval_without_change_breaks_the_loop():
+    """Re-evaluating the gate with no state change must short-circuit, not spin."""
+    cid = claim_tools.open_claim("POL-71", "auto_collision", "+15555550100")["claim_id"]
+    claim_tools.request_estimate(cid, "+15555550111")
+    claim_tools.commit_party(cid, PartyRole.REPAIR_SHOP.value)
+    claim_tools.check_parts_eta(cid, "bumper", days=10)  # parts BLOCKED
+
+    first = claim_tools.evaluate_commit_gate(cid)
+    assert first["can_commit"] is False
+    assert not first.get("looping")  # first closed eval is legitimate
+
+    # Second identical eval (no party status changed) trips the loop-breaker.
+    second = claim_tools.evaluate_commit_gate(cid)
+    assert second.get("looping") is True
+    assert second.get("stop") is True
+    assert "evaluate_commit_gate" in second["message"]
+
+
+def test_replan_clears_block_then_gate_opens():
+    """A state-changing re-plan (expedited parts) clears the block and resets the guard."""
+    cid = claim_tools.open_claim("POL-72", "auto_collision", "+15555550100")["claim_id"]
+    claim_tools.request_estimate(cid, "+15555550111")
+    claim_tools.commit_party(cid, PartyRole.REPAIR_SHOP.value)
+    claim_tools.notify_lienholder(cid, "lien@example.com")
+    claim_tools.commit_party(cid, PartyRole.LIENHOLDER.value)
+    claim_tools.check_parts_eta(cid, "bumper", days=10)  # BLOCKED
+
+    assert claim_tools.evaluate_commit_gate(cid)["can_commit"] is False
+    # Re-plan: expedite the part so the supplier COMMITS (state change).
+    claim_tools.check_parts_eta(cid, "bumper (expedited)", days=1)
+
+    opened = claim_tools.evaluate_commit_gate(cid)
+    assert opened["can_commit"] is True
+    assert opened["state"] == ClaimState.COMMITTED.value
+    assert not opened.get("looping")
+
+
 def test_settlement_rejected_before_committed():
     cid = claim_tools.open_claim("POL-3", "auto_collision", "+15555550100")["claim_id"]
     out = claim_tools.issue_settlement(cid, 1000.0)

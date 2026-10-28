@@ -167,9 +167,59 @@ def evaluate_commit_gate(claim_id: str) -> dict[str, Any]:
 
     This is the multi-party gate. When it opens, the claim advances to COMMITTED.
     When it is closed by a BLOCKED party, the response names who to re-plan around.
+
+    The gate is a pure function of party statuses: calling it again without
+    changing any party's status returns the same result. To make the
+    orchestration robust against a model that re-polls the gate, we fingerprint
+    the party-status set and short-circuit after repeated no-change calls,
+    returning a terminal ``looping`` signal instructing the caller to re-plan or
+    stop rather than evaluate again.
     """
     claim = _require(claim_id)
+
+    # Fingerprint current party statuses (what the gate decision depends on).
+    fingerprint = ";".join(
+        f"{role}:{p.status.value}"
+        for role, p in sorted(claim.parties.items())
+    )
+    prev_fp = claim.facts.get("_gate_fp")
+    repeat = int(claim.facts.get("_gate_repeat", 0))
+    repeat = repeat + 1 if fingerprint == prev_fp else 0
+    claim.facts["_gate_fp"] = fingerprint
+    claim.facts["_gate_repeat"] = repeat
+
     decision = commit_gate.try_commit(claim)
+
+    # No state changed since the last evaluation and the gate is still closed:
+    # stop the caller from polling. Surface an explicit terminal instruction.
+    if repeat >= 1 and not decision.can_commit:
+        store.save(claim)
+        action = (
+            "re-plan the blocked party with a state-changing tool "
+            "(check_parts_eta with an expedited ETA, commit_party on an "
+            "alternative, or engage_party for a replacement), then evaluate once"
+            if decision.blocked
+            else "wait for the pending party; do not evaluate again until a "
+                 "party's status changes"
+        )
+        return {
+            "claim_id": claim_id,
+            "state": claim.state.value,
+            "looping": True,
+            "stop": True,
+            "message": (
+                "Commit gate unchanged since the last evaluation — re-evaluating "
+                "will not change the result. Do NOT call evaluate_commit_gate "
+                f"again. Next: {action}."
+            ),
+            **decision.to_dict(),
+        }
+
+    # Successful commit resets the loop guard for any later phase.
+    if decision.can_commit:
+        claim.facts.pop("_gate_fp", None)
+        claim.facts.pop("_gate_repeat", None)
+
     store.save(claim)
     return {"claim_id": claim_id, "state": claim.state.value, **decision.to_dict()}
 
