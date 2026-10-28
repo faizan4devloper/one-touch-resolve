@@ -85,7 +85,7 @@
 </head>
 <body>
 <div class="logo"><span class="d"></span> One Touch Resolve · HCLTech</div>
-<div class="hint">← → to navigate</div>
+<div class="hint">← → to navigate · F for fullscreen</div>
 
 <div class="stage">
   <!-- 1 — TITLE -->
@@ -120,9 +120,9 @@
   <!-- 3 — THE MOMENT (story) -->
   <section class="slide light">
     <div class="kick"><span class="ln"></span> The moment</div>
-    <h2>Faizan is in a collision on MG Road.<br>He never makes a single call.</h2>
-    <p class="sub">His insurer's agent reaches out first on WhatsApp: <i>“Are you safe?”</i>
-      He taps yes, then sends <b>one photo</b> of the damage. That photo is the only thing he does.</p>
+    <h2>Alex Rivera is in a collision on Market Street.<br>Never makes a single call.</h2>
+    <p class="sub">Their insurer's agent reaches out first on WhatsApp: <i>“Are you safe?”</i>
+      Alex taps yes, then sends <b>one photo</b> of the damage. That photo is the only thing they do.</p>
     <div class="chips">
       <span class="chip" style="color:#5a688c;border-color:#e2e7f2;background:#fff"><b style="color:#0b1633">1 tap</b> — safety</span>
       <span class="chip" style="color:#5a688c;border-color:#e2e7f2;background:#fff"><b style="color:#0b1633">1 photo</b> — the damage</span>
@@ -192,7 +192,7 @@
       <div><div class="v">4</div><div class="k">parties coordinated</div></div>
       <div><div class="v">4</div><div class="k">channels, one state</div></div>
       <div><div class="v">Nova Pro</div><div class="k">real vision triage</div></div>
-      <div><div class="v">42 ✓</div><div class="k">tests passing</div></div>
+      <div><div class="v">56 ✓</div><div class="k">tests passing</div></div>
     </div>
   </section>
 </div>
@@ -216,10 +216,16 @@
   }
   document.getElementById('next').onclick=()=>go(i+1);
   document.getElementById('prev').onclick=()=>go(i-1);
+  function toggleFull(){
+    const el=document.documentElement;
+    if(!document.fullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen).call(el); }
+    else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen).call(document); }
+  }
   addEventListener('keydown',e=>{
     if(e.key==='ArrowRight'||e.key===' ')go(i+1);
     if(e.key==='ArrowLeft')go(i-1);
     if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+    if(e.key==='f'||e.key==='F')toggleFull();
   });
   go(0);
 </script>

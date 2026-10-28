@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { SessionProvider, useSession } from "./SessionContext";
+import IntroSlides from "./IntroSlides";
 import Landing from "./Landing";
 import Demo from "./demo/Demo";
 import "./index.css";
@@ -12,13 +13,13 @@ import "./demo/demo.css";
  * agentic-studio pattern. This keeps URLs clean (no "#/..." hash routes) and
  * works reliably behind the Cloud9/VFS single-port preview proxy.
  *
- * Flow: Landing ("Start the live demo") → Demo (split phone + operator console).
- * Demo "Exit console" → back to Landing. There is no separate login step.
+ * Flow: Intro (branded slides) → Landing ("Start the live demo") → Demo
+ * (split phone + operator console). Demo "Exit console" → back to Landing.
  */
-type View = "landing" | "demo";
+type View = "intro" | "landing" | "demo";
 
 function AppRoot() {
-  const [view, setView] = useState<View>("landing");
+  const [view, setView] = useState<View>("intro");
   const { setSessionId } = useSession();
 
   const startDemo = () => {
@@ -33,6 +34,9 @@ function AppRoot() {
     setView("landing");
   };
 
+  if (view === "intro") {
+    return <IntroSlides onDone={startDemo} />;
+  }
   if (view === "demo") {
     return <Demo onExit={exitDemo} />;
   }
