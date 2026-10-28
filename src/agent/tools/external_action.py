@@ -46,7 +46,7 @@ def open_external_ticket(
         "external_id": claim_id,
         "summary": summary,
         "priority": priority,
-        "source": "coordinated-outcome-engine",
+        "source": "one-touch-resolve",
     }
 
     # Offline / unconfigured -> deterministic simulated ticket.

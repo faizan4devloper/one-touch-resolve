@@ -71,7 +71,7 @@ AWS End User Messaging  +  EUM Social  ──►  Amazon SNS topic
 ## Repository layout
 
 ```
-coordinated-outcome-engine/
+one-touch-resolve/
 ├── src/                     # Engine source — single source of truth
 │   ├── agent/               #   Strands supervisor, sub-agents, commit gate, approval gate, memory, safety, tools/
 │   ├── channels/            #   AWS CDS channel adapters (RCS/SMS, WhatsApp, SES) + dispatcher/router

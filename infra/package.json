@@ -1,5 +1,5 @@
 {
-  "name": "coordinated-outcome-engine-infra",
+  "name": "one-touch-resolve-infra",
   "version": "1.0.0",
   "description": "AWS CDK stack for the One Touch Resolve (Insurance Claims Coordination Agent)",
   "bin": {
