@@ -1,0 +1,275 @@
+/* Split-screen demo layout. Pulls in both app stylesheets so each pane renders
+   exactly like its standalone page. */
+@import "../index.css";      /* operator dashboard styles */
+@import "../phone/phone.css"; /* customer phone styles */
+
+:root {
+  --demo-bg: #eef1f6;
+  --demo-pane: #f6f8fb;
+  --demo-line: #e0e4ec;
+  --demo-ink: #1a1f36;
+  --demo-ink-2: #3c4257;
+  --demo-ink-3: #697386;
+  --demo-ink-4: #8792a2;
+  --demo-brand: #635bff;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.demo-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--demo-bg);
+  color: var(--demo-ink);
+  overflow: hidden;
+}
+
+/* Top bar */
+.demo-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--demo-line);
+  box-shadow: 0 1px 2px rgba(26,31,54,0.04);
+  z-index: 5;
+}
+.demo-brand { display: flex; align-items: center; gap: 11px; }
+.demo-brand img { width: 28px; height: 28px; border-radius: 8px; box-shadow: 0 2px 6px rgba(99,91,255,.22); }
+.demo-title { font-family: "Inter Tight", sans-serif; font-weight: 700; font-size: 14px; letter-spacing: -0.015em; line-height: 1.2; color: var(--demo-ink); }
+.demo-sub { font-size: 11px; color: var(--demo-ink-4); margin-top: 1px; letter-spacing: -0.003em; }
+.demo-legend {
+  display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--demo-ink-2);
+  background: #f6f8fb; border: 1px solid var(--demo-line); border-radius: 999px; padding: 5px 13px;
+}
+.demo-legend .leg { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.demo-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.demo-legend .dot.cust { background: #25d366; box-shadow: 0 0 0 3px #25d36622; }   /* whatsapp green */
+.demo-legend .dot.ops { background: #4f8cff; box-shadow: 0 0 0 3px #4f8cff22; }
+.demo-legend .arrow { color: var(--demo-ink-4); font-weight: 600; }
+
+/* ── Stat band (kicker + four big numbers) ──────────────────────────── */
+.demo-statband {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 10px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--demo-line);
+}
+.statband-kicker {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--demo-ink-4); font-family: "IBM Plex Mono", monospace; white-space: nowrap;
+}
+.statband-stats { display: flex; align-items: baseline; gap: 26px; }
+.statband-stats .stat { display: flex; align-items: baseline; gap: 8px; }
+.statband-stats .stat-num {
+  font-family: "Inter Tight", sans-serif; font-weight: 800; font-size: 22px; line-height: 1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #7a73ff, #635bff);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.statband-stats .stat-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--demo-ink-4);
+}
+
+/* Split body */
+.demo-split {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 0;
+  min-height: 0;
+  transition: grid-template-columns 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* Stage 1 — phone centered, operator collapsed (0 width). */
+.demo-split.is-centered { grid-template-columns: 1fr 0fr; }
+/* Stage 2 — slide to the split: phone takes the left column, operator reveals. */
+.demo-split.is-split { grid-template-columns: minmax(360px, 420px) 1fr; }
+
+/* The phone pane glides from center to left as the columns resize. */
+.demo-split.is-centered .pane-phone { justify-content: center; }
+.demo-split .pane-phone { transition: all 0.6s cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+/* The operator pane fades/clips in only when the split opens (no empty panel). */
+.demo-split .pane-web { overflow: hidden; }
+.demo-split.is-centered .pane-web { opacity: 0; pointer-events: none; }
+.demo-split.is-split .pane-web {
+  opacity: 1;
+  animation: web-reveal 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes web-reveal { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .demo-split, .demo-split .pane-phone, .demo-split.is-split .pane-web { transition: none; animation: none; }
+}
+
+/* Exit button shown in stage 1 (before the operator sidebar/topbar exists). */
+.demo-exit {
+  position: absolute; top: 16px; right: 18px; z-index: 20;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #ffffff; color: #3c4257; border: 1px solid #d6dbe4;
+  border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(26,31,54,0.06); transition: border-color .15s, color .15s;
+}
+.demo-exit:hover { border-color: #0f62fe; color: #0f62fe; }
+
+.pane { position: relative; min-height: 0; display: flex; flex-direction: column; }
+
+.pane-tag {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--demo-ink-3);
+  padding: 7px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--demo-line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pane-session {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  color: #5546e8;
+  background: #eef0ff;
+  padding: 2px 7px;
+  border-radius: 5px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* LEFT — phone column, soft light backdrop so the device still pops */
+.pane-phone {
+  background: radial-gradient(130% 100% at 50% 8%, #ffffff 0%, #e9edf4 72%);
+  border-right: 1px solid var(--demo-line);
+}
+.phone-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+/* Let the iPhone frame use the full column height (it computes its own zoom).
+   Override phone.css's dark radial stage so the light .pane-phone backdrop
+   shows through — only the WhatsApp app INSIDE the device stays dark. */
+.phone-host .ip-stage { min-height: 0; height: 100%; padding: 0; background: transparent; }
+
+/* RIGHT — operator web on its own light surface */
+.pane-web { background: var(--demo-pane); }
+.web-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: var(--demo-pane);
+  position: relative;
+  isolation: isolate;          /* contain any stacking so nothing bleeds up */
+}
+/* The operator App normally uses .nexus at 100vh with an internal scroll.
+   Embedded in the demo pane we hide the big navy sidebar (the pane is already
+   half-width) and let .web-host be the SINGLE scroll container so content fills
+   the pane instead of wrapping one word per line. */
+.web-host { overflow-y: auto; overflow-x: hidden; }
+.web-host .nexus { height: auto; min-height: 100%; background: var(--demo-pane); }
+/* Hide the full sidebar in the embedded pane — reclaim ~272px for content. */
+.web-host .nexus .nx-side { display: none; }
+.web-host .nexus .nx-main { overflow: visible; background: var(--demo-pane); }
+.web-host .nexus .nx-scroll { overflow: visible; padding: 18px 22px 24px; }
+.web-host .nexus .nx-topbar { padding: 14px 22px; }
+.web-host .boot { min-height: 100%; }
+
+/* Responsive: stack on narrow screens */
+@media (max-width: 900px) {
+  .demo-split { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: auto; }
+  .demo-root { overflow: auto; }
+  .phone-host { padding: 20px 10px; }
+}
+
+/* ── Embedded operator sizing ─────────────────────────────────────────
+   The dashboard was designed full-width; in the ~half-width demo pane we
+   tighten the type scale and keep the 2-column grid so text never wraps
+   one-word-per-line and party names don't truncate. */
+.web-host .nexus .nx-hero { padding: 20px 26px; margin-bottom: 18px; }
+.web-host .nexus .nx-hero h3 { font-size: 26px; }
+.web-host .nexus .nx-hero .sub { font-size: 13px; margin-top: 8px; }
+.web-host .nexus .nx-hero-cta { padding: 12px 18px; font-size: 14px; }
+.web-host .nexus .nx-card-head h4 { font-size: 17px; }
+.web-host .nexus .nx-grid { grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 16px; }
+.web-host .nexus .nx-col { gap: 16px; }
+.web-host .nexus .nx-rail { gap: 16px; }
+/* Compact party pills so full names fit in the narrower rail. */
+.web-host .nexus .chtag { padding: 3px 7px; font-size: 10px; }
+.web-host .nexus .party .pstatus { padding: 3px 7px; font-size: 9.5px; }
+.web-host .nexus .party .right { gap: 6px; }
+.web-host .nexus .party .name { font-size: 12px; }
+
+/* ── Fix cross-pane class collisions ──────────────────────────────────
+   .brand, .brand-mark and .tag are defined in BOTH the operator stylesheet
+   (index.css) and the phone stylesheet (phone.css). Because both are imported
+   here, the phone's muted-grey versions were leaking into the operator app bar
+   (the "Mission Control" tag rendered as a grey bar, title washed out).
+   Re-assert the operator versions, scoped to the web pane, so they win there. */
+.web-host .brand { display: flex; align-items: center; gap: 13px; }
+.web-host .brand-mark {
+  position: relative; width: 34px; height: 34px; border-radius: 9px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; flex: none;
+  background: linear-gradient(135deg, #7a73ff, #635bff 55%, #5546e8);
+  box-shadow: 0 2px 6px rgba(99,91,255,.28), 0 8px 20px rgba(99,91,255,.22);
+  -webkit-text-fill-color: initial;
+}
+.web-host .brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.web-host .tag {
+  display: inline-flex; align-items: center;
+  border: 1px solid #d9dcff; border-radius: 999px;
+  padding: 3px 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: #ffffff; background: linear-gradient(135deg,#7a73ff,#635bff);
+  -webkit-text-fill-color: #ffffff;
+  margin: 0; line-height: 1.3; box-shadow: 0 1px 3px rgba(99,91,255,.35);
+}
+.web-host .brand-title h1 { color: #1a1f36; -webkit-text-fill-color: #1a1f36; }
+.web-host .brand-sub {
+  color: #5b6475; -webkit-text-fill-color: #5b6475; margin-top: 3px;
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+}
+
+/* ── Embedded operator chrome ─────────────────────────────────────────
+   Compact top chrome so the main content (timeline + parties) gets more
+   room — the subtitle line was removed in App.tsx. */
+.web-host .shell-top { padding: 12px 24px 0; }
+.web-host .appbar { margin-bottom: 10px; padding-bottom: 10px; align-items: center; }
+.web-host .strip { margin-bottom: 8px; }
+.web-host .progress { margin: 2px 0 10px; }
+.web-host .shell-body { padding: 0 24px 16px; }
+
+/* In the narrower embedded pane the party names were truncating ("AllRo…",
+   "Bayside…"). Give the right column more room and compact the pills so the
+   full names fit. */
+@media (min-width: 920px) {
+  .web-host .grid { grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); }
+}
+.web-host .chtag { padding: 3px 8px; font-size: 10.5px; }
+.web-host .party .pstatus { padding: 3px 8px; font-size: 10px; }
+.web-host .party .right { gap: 7px; }
+
+/* ── Device shadow on the light phone surround ────────────────────────
+   On the new light backdrop a dark phone can read flat; a soft layered
+   shadow restores depth so the device pops the way it did on dark. */
+.phone-host .marvel-device {
+  box-shadow:
+    0 2px 6px rgba(26,31,54,0.10),
+    0 18px 50px rgba(26,31,54,0.22) !important;
+}

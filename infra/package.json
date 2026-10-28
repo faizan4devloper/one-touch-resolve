@@ -1,0 +1,26 @@
+{
+  "name": "coordinated-outcome-engine-infra",
+  "version": "1.0.0",
+  "description": "AWS CDK stack for the One Touch Resolve (Insurance Claims Coordination Agent)",
+  "bin": {
+    "coe": "bin/coe.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --require-approval never",
+    "destroy": "cdk destroy --force"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.30",
+    "aws-cdk": "2.150.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.5"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.150.0",
+    "constructs": "10.3.0",
+    "source-map-support": "0.5.21"
+  }
+}

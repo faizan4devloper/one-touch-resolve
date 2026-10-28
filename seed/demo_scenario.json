@@ -1,0 +1,42 @@
+{
+  "scenario_name": "Rental-car accident — back-ordered part, multi-party recovery",
+  "policy_number": "RNT-2026-77045",
+  "peril": "auto_collision",
+  "description": "Maya's rental car is rear-ended on the interstate; rear bumper crushed and backup sensors damaged. No injuries. She sends photos from the roadside over WhatsApp, meeting the rental agreement's 24-hour reporting deadline.",
+  "severity": "moderate",
+  "claimant_contact": "+15555550100",
+  "repair_shop_contact": "+15555550111",
+  "lienholder_email": "adjuster@example.com",
+  "part": "rear bumper assembly",
+  "part_eta_days": 5,
+  "settlement_amount": 4200.0,
+  "personas": {
+    "claimant": {
+      "name": "Maya",
+      "role": "Renter / Driver",
+      "channel": "whatsapp",
+      "why": "Rich two-way media — sends damage photos/video from the roadside instantly."
+    },
+    "repair_shop": {
+      "name": "Dan",
+      "role": "Fleet Claims Coordinator (rental branch)",
+      "channel": "rcs",
+      "why": "Verified interactive RCS cards for estimate/appointment; auto-falls back to SMS on the lot."
+    },
+    "lienholder": {
+      "name": "Priya",
+      "role": "Insurer Adjuster",
+      "channel": "email",
+      "why": "Durable, auditable documents — coverage confirmation and settlement letter via SES."
+    }
+  },
+  "narrative": [
+    "Maya (renter) sends photos of her rear-ended rental over WhatsApp, inside the 24-hour reporting window.",
+    "Supervisor opens the claim, triages severity from the media, and fans out.",
+    "Dan (fleet coordinator) is engaged over RCS for the estimate; Priya (insurer adjuster) gets a coverage notice via SES.",
+    "Rear bumper is back-ordered 5 days -> commit gate CLOSED (parts BLOCKED).",
+    "Supervisor re-plans: arranges a swap rental for Maya, updates her proactively on WhatsApp, sources the part in 2 days.",
+    "Dan's RCS session degrades on the lot -> workflow continues on SMS with preserved state.",
+    "All required parties commit -> gate OPENS -> settlement letter (SES) to Priya + Maya notified on WhatsApp."
+  ]
+}

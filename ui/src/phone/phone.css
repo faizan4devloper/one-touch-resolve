@@ -1,0 +1,610 @@
+:root {
+  /* WhatsApp LIGHT theme */
+  --wa-bg: #efeae2;        /* classic WhatsApp light chat wallpaper (warm beige) */
+  --wa-panel: #f0f2f5;     /* light panel (reply bar) */
+  --wa-header: #f0f2f5;    /* light header */
+  --wa-in: #ffffff;        /* incoming bubble (white) */
+  --wa-out: #d9fdd3;       /* outgoing bubble (light green) */
+  --wa-text: #111b21;      /* dark ink text */
+  --wa-sub: #667781;       /* muted grey */
+  --wa-green: #00a884;
+  --line: #e3e3e3;
+  --brand: #635bff;
+  --brand-2: #7a73ff;
+  /* Type system (matches the operator dashboard) */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  /* iPhone 17 Pro titanium */
+  --ti-1: #3a3a3c;
+  --ti-2: #6e6e73;
+  --ti-3: #8e8e93;
+  --ti-edge: #d6d6d8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  font-family: var(--font-sans);
+  background: #e9edf4;
+  color: var(--wa-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.006em;
+}
+
+/* ─────────── Stage + app content (device frame comes from the library) ─────────── */
+.ip-stage {
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden; /* device is zoom-fit to the viewport, so never scroll here */
+  background: radial-gradient(1200px 700px at 50% -10%, #ffffff 0%, #e9edf4 60%, #e2e7ef 100%);
+}
+
+/* App fills the frameset's screen; content flows under the notch via padding. */
+.ip-app {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--wa-bg);
+  overflow: hidden;
+}
+
+/* iOS status bar (rendered above the app content, beside the notch) */
+.ip-status {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #111b21;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  z-index: 30;
+  pointer-events: none;
+}
+.ip-time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.ip-status-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ───────────────────────── WhatsApp-style app ───────────────────────── */
+.phone {
+  flex: 1;
+  min-height: 0;
+  margin-top: 34px; /* clear the status bar */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--wa-bg);
+  background-image: radial-gradient(1200px 380px at 50% -8%, rgba(99, 91, 255, 0.06), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='1' fill='%23d9d2c7'/%3E%3C/svg%3E");
+}
+
+/* Header */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 16px;
+  background: var(--wa-header);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex: none;
+  position: relative;
+}
+.bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--brand), var(--wa-green), transparent);
+  opacity: 0.55;
+}
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7a73ff, #635bff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(99, 91, 255, 0.4);
+}
+.who {
+  flex: 1;
+  min-width: 0;
+}
+.who .name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.who .pres {
+  font-size: 12px;
+  color: var(--wa-sub);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wa-green);
+  box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.5);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(0, 168, 132, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 168, 132, 0);
+  }
+}
+.hdr-ic {
+  color: var(--wa-sub);
+}
+
+/* Thread */
+.thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.daynote {
+  align-self: center;
+  background: #ffffff;
+  color: var(--wa-sub);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  text-align: center;
+  max-width: 90%;
+  box-shadow: 0 1px 1px rgba(11,20,26,0.08);
+}
+.msg {
+  max-width: 82%;
+  padding: 8px 11px 9px;
+  border-radius: 11px;
+  font-size: 14.5px;
+  line-height: 1.42;
+  position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 1px 1px rgba(11, 20, 26, 0.13);
+}
+.msg .t {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(17, 27, 33, 0.45);
+  float: right;
+  margin: 6px 0 -2px 10px;
+}
+.agent {
+  align-self: flex-start;
+  background: var(--wa-in);
+  color: var(--wa-text);
+  border-top-left-radius: 3px;
+}
+.customer {
+  align-self: flex-end;
+  background: var(--wa-out);
+  color: var(--wa-text);
+  border-top-right-radius: 3px;
+}
+.customer .t {
+  color: rgba(17, 27, 33, 0.5);
+}
+.msg-photo {
+  display: block;
+  max-width: 220px;
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 2px;
+}
+.system {
+  align-self: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: #3b4a54;
+  font-size: 12.5px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  max-width: 90%;
+  text-align: center;
+}
+.system.tow {
+  border-color: #a7e3c8;
+  color: #0f7a53;
+  background: #e8f8f0;
+}
+.system.rental {
+  border-color: #bcccf5;
+  color: #3a5bc7;
+  background: #eef2fd;
+}
+.system.repair {
+  border-color: #e6cfa0;
+  color: #9a6b12;
+  background: #fbf3e2;
+}
+.system.summary {
+  border-color: #cfccff;
+  color: #5546e8;
+  background: #eef0ff;
+}
+.sys-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: center;
+}
+.sys-row svg {
+  flex: none;
+}
+
+/* Typing indicator */
+.typing {
+  align-self: flex-start;
+  background: var(--wa-in);
+  padding: 11px 14px;
+  border-radius: 9px;
+  border-top-left-radius: 2px;
+  display: flex;
+  gap: 4px;
+}
+.typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--wa-sub);
+  animation: blink 1.2s infinite;
+}
+.typing i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes blink {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* Quick replies */
+.replies {
+  flex: none;
+  padding: 10px 12px 18px;
+  background: var(--wa-panel);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  min-height: 66px;
+  align-items: center;
+}
+.qr {
+  flex: 1;
+  min-width: 44%;
+  padding: 13px 14px;
+  border-radius: 22px;
+  border: 1.5px solid var(--wa-green);
+  background: rgba(0, 168, 132, 0.06);
+  color: var(--wa-text);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s, transform 0.1s;
+}
+.qr:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.qr.primary {
+  background: var(--wa-green);
+  color: #04211a;
+  border-color: var(--wa-green);
+}
+.qr.full {
+  min-width: 100%;
+}
+.replies .hint {
+  color: var(--wa-sub);
+  font-size: 12.5px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Start overlay — contained INSIDE the device screen, scrollable if tall.
+   Vertically centered so the card sits in the middle of the device, not
+   top-aligned with a big void below. */
+.start {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: linear-gradient(160deg, #ffffff, #eef1f6);
+  display: flex;
+  align-items: center;          /* center the card vertically */
+  justify-content: center;
+  padding: 44px 16px 20px; /* clear the status bar / notch at top */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.start-card {
+  width: 100%;
+  max-width: 340px;
+  background: #ffffff;
+  border: 1px solid #e6e9ef;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 16px 48px rgba(26, 31, 54, 0.14);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1a1f36;
+  -webkit-text-fill-color: #1a1f36;
+}
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #3b82f6, #0f62fe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 4px 14px rgba(15, 98, 254, 0.35);
+  flex: none;
+}
+.intro-tag {
+  color: #667781;
+  font-size: 12.5px;
+  margin: 7px 0 14px;
+  line-height: 1.45;
+}
+.intro-tag b { color: #1a1f36; font-weight: 650; }
+
+/* Guided first-run: numbered steps so a new user knows exactly what to fill. */
+.start-steps { display: flex; flex-direction: column; gap: 11px; margin-bottom: 14px; }
+.start-step { display: flex; align-items: flex-start; gap: 10px; }
+.start-step .step-n {
+  flex: none; width: 20px; height: 20px; margin-top: 22px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: #0f62fe; color: #fff; font-size: 11px; font-weight: 700;
+}
+.start-step label { flex: 1; min-width: 0; }
+.start-step .step-hint { color: #8792a2; font-weight: 400; font-size: 11px; }
+
+/* Input + inline action (VIN decode, Locate) */
+.field-with-btn { display: flex; gap: 7px; margin-top: 5px; }
+.field-with-btn input { flex: 1; min-width: 0; margin-top: 0 !important; }
+.field-btn {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  background: #0f62fe; color: #fff; border: none; border-radius: 8px;
+  padding: 0 13px; font-family: var(--font-sans); font-size: 13px; font-weight: 650;
+  cursor: pointer; white-space: nowrap; transition: background 0.15s;
+}
+.field-btn:hover:not(:disabled) { background: #0353e9; }
+.field-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.field-note { display: block; margin-top: 6px; font-size: 11.5px; color: #0f7a53; line-height: 1.4; }
+.field-link {
+  display: inline-block; margin-top: 6px; background: none; border: none; padding: 0;
+  font-size: 11.5px; color: #0f62fe; cursor: pointer; text-decoration: underline;
+}
+
+/* Scenario: quick-pick chips + optional free text (both feed real triage). */
+.scenario-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.scenario-chip {
+  flex: 1 1 auto; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid #d6dbe4; background: #f6f8fb; color: #3c4257;
+  font-family: var(--font-sans); font-size: 12px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+.scenario-chip:hover { border-color: #0f62fe; }
+.scenario-chip.active { background: #0f62fe; border-color: #0f62fe; color: #fff; }
+.scenario-text {
+  width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid #d6dbe4; background: #f6f8fb; color: #1a1f36;
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.4; resize: vertical; min-height: 52px;
+}
+.scenario-text:focus { outline: none; border-color: #0f62fe; box-shadow: 0 0 0 3px rgba(15,98,254,0.14); background: #fff; }
+
+/* Real OSM accident map + animated tow marker */
+.start-map { margin: 2px 0 14px; }
+.amap {
+  position: relative; width: 100%; height: 150px; border-radius: 12px; overflow: hidden;
+  border: 1px solid #d6dbe4; background: #e9edf4;
+}
+.amap-frame { width: 100%; height: 100%; border: 0; display: block; filter: saturate(1.02); }
+.amap-pin {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.amap-accident { color: #e0384f; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); z-index: 3; }
+.amap-tow {
+  width: 26px; height: 26px; border-radius: 50%; background: #0f62fe; color: #fff;
+  transform: translate(-50%, -50%); box-shadow: 0 2px 6px rgba(15,98,254,.5);
+  transition: left 0.9s linear, top 0.9s linear; z-index: 2;
+}
+.amap-cap {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 5px 9px; font-size: 10.5px; font-weight: 600;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.55));
+  color: #fff; letter-spacing: -0.005em;
+}
+.amap-live { color: #7ef0c0; }
+.amap-sim { color: #cdd9ec; font-weight: 500; }
+.start-card label {
+  display: block;
+  font-size: 12px;
+  color: #667781;
+  margin-bottom: 9px;
+}
+.start-card input,
+.start-card select {
+  width: 100%;
+  margin-top: 5px;
+  min-height: 46px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #d6dbe4;
+  background: #f6f8fb;
+  color: #1a1f36;
+  font-size: 16px;
+}
+.start-card input:focus {
+  outline: none;
+  border-color: #0f62fe;
+  box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.14);
+}
+/* Native-mobile dropdown: iOS/Android open their OS picker on tap, but the
+   field itself must READ as a dropdown — a chevron affordance, a comfortable
+   44px tap target, and 16px text so iOS doesn't zoom-on-focus. appearance:none
+   removes the flat default look while the OS wheel/picker still fires on tap. */
+.start-card select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-height: 46px;
+  padding: 12px 40px 12px 14px;
+  font-size: 16px;                 /* >=16px prevents iOS zoom-on-focus */
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23697386' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 18px;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.start-card select:focus {
+  outline: none;
+  border-color: #0f62fe;
+  box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.14);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 2px 0 14px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3c4257;
+  background: #f0f2f5;
+  border: 1px solid #e3e6ec;
+  padding: 5px 9px;
+  border-radius: 999px;
+}
+.cta {
+  width: 100%;
+  margin-top: 2px;
+  padding: 14px;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: #0f62fe;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(15, 98, 254, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.2s;
+}
+.cta:hover {
+  background: #0353e9;
+  box-shadow: 0 14px 34px rgba(15, 98, 254, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.cta:active {
+  transform: scale(0.98);
+}
+.cta:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.fine {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 11px;
+  color: #5f6478;
+}
+.start-error {
+  margin: 0 0 10px; padding: 9px 12px; border-radius: 8px;
+  background: #fdeef1; border: 1px solid #f6c9d3; color: #c0243f;
+  font-size: 12.5px; line-height: 1.4; text-align: center;
+}
+
+.thread::-webkit-scrollbar {
+  width: 0;
+}
