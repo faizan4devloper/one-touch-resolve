@@ -494,6 +494,16 @@ def upload_damage_photo(session_id: str, image_bytes: bytes,
         t.setdefault("reasoning", "")
         t["source"] = t.get("source", "bedrock") + "-fallback"
 
+    # Image-validity gate: if the vision model says the photo is NOT a vehicle,
+    # reject it honestly — do NOT store it or fabricate a triage. The caller
+    # (phone UI) shows the reason and keeps the photo step open for a re-upload.
+    if t.get("valid") is False:
+        reason = t.get("reject_reason") or "That doesn't look like a photo of your vehicle."
+        with _LOCK:
+            sess.facts["photo_rejects"] = sess.facts.get("photo_rejects", 0) + 1
+        _bump()
+        return {"valid": False, "reject_reason": reason, "source": t.get("source", "bedrock-vision")}
+
     with _LOCK:
         sess.facts["photo"] = data_url
         sess.facts["photo_received"] = True
@@ -761,34 +771,38 @@ def _summary_html(sess: Session) -> str:
                 f'font-size:13px;font-weight:600">{value}{refhtml}</td></tr>')
 
     rows.append(row("Claim", f.get("claim_id", "opened")))
-    rows.append(row("Vehicle", sess.vehicle))
-    rows.append(row("Location", sess.location))
+    rows.append(row("Vehicle", sess.vehicle or "On file"))
+    rows.append(row("Location", sess.location or "Captured at scene"))
     rows.append(row("Safety", "Confirmed safe" if f.get("safety") == "safe" else "Assisted"))
     if t:
-        rows.append(row("Damage", f"{t.get('severity','?').title()} · est. {t.get('est_repair_days','?')} days",
-                        f"AI: {t.get('source','?')}"))
+        dmg = f"{t.get('severity','?').title()} · est. {t.get('est_repair_days','?')} days"
+        rows.append(row("AI damage triage", dmg, f"{t.get('source','?')}"))
+        if t.get("reasoning"):
+            rows.append(row("Vision assessment", t["reasoning"]))
+        rows.append(row("Drivable", "No — tow arranged" if t.get("drivable") is False else "Yes"))
     if f.get("tow"):
         rows.append(row("Tow", f"{f['tow']['provider']} · ETA {f['tow']['eta_min']} min", f['tow']['ref']))
     if f.get("rental"):
         rows.append(row("Rental", f"{f['rental']['provider']} {f['rental']['class']}", f['rental']['ref']))
     if f.get("repair"):
         rows.append(row("Repair", f"{f['repair']['shop']} · {f['repair']['slot']}", f['repair']['ref']))
+    rows.append(row("Resolution", "Coordinated end-to-end — zero calls"))
 
     consents = len(f.get("consents", []))
     return f"""<!doctype html>
 <html><body style="margin:0;background:#f6f8fb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <div style="max-width:560px;margin:0 auto;padding:24px">
-    <div style="background:linear-gradient(135deg,#7a73ff,#635bff);border-radius:16px 16px 0 0;padding:22px 24px">
-      <div style="color:#fff;font-size:18px;font-weight:700;letter-spacing:-.02em">Accident Assist — you're covered</div>
-      <div style="color:#dcdcff;font-size:13px;margin-top:4px">Everything below was arranged with zero calls · {consents} taps to authorize</div>
+    <div style="background:linear-gradient(135deg,#0f62fe,#0353e9);border-radius:16px 16px 0 0;padding:22px 24px">
+      <div style="color:#fff;font-size:18px;font-weight:700;letter-spacing:-.02em">One Touch Resolve — you're covered</div>
+      <div style="color:#cfe0ff;font-size:13px;margin-top:4px">Everything below was arranged with zero calls · {consents} taps to authorize</div>
     </div>
     <div style="background:#fff;border:1px solid #e6e9ef;border-top:none;border-radius:0 0 16px 16px;padding:8px 10px 18px">
-      <p style="color:#3c4257;font-size:14px;padding:14px 14px 6px;margin:0">Hi {sess.customer_name.split()[0]}, here's a summary of the assistance we set up right after your incident:</p>
+      <p style="color:#3c4257;font-size:14px;padding:14px 14px 6px;margin:0">Hi {sess.customer_name.split()[0] if sess.customer_name else 'there'}, here's a summary of the assistance we set up right after your incident:</p>
       <table style="width:100%;border-collapse:collapse;margin:6px 0">{''.join(rows)}</table>
-      <div style="margin:14px;padding:12px 14px;background:#eef7f2;border:1px solid #cfeadd;border-radius:10px;color:#1a7f57;font-size:13px">
-        You didn't make a single call — we handled it. Reply any time to change anything.
+      <div style="margin:14px;padding:12px 14px;background:#eaf1ff;border:1px solid #cfe0ff;border-radius:10px;color:#0353e9;font-size:13px">
+        You didn't make a single call — the agent coordinated every party for you.
       </div>
-      <p style="color:#8792a2;font-size:11px;text-align:center;margin:14px 0 4px">Zero Call Accidental Assist · powered by Amazon Bedrock &amp; AWS Communication Developer Services</p>
+      <p style="color:#8792a2;font-size:11px;text-align:center;margin:14px 0 4px">One Touch Resolve · powered by Amazon Bedrock AgentCore &amp; AWS Communication Developer Services (SES, End User Messaging)</p>
     </div>
   </div>
 </body></html>"""
