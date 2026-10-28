@@ -223,6 +223,13 @@ def build():
     f = shapes.add_textbox(X(40), Y(872), X(600), Y(20))
     _text(f, [("© 2026 · One Touch Resolve · Confidential", 9, RGBColor(0x8B, 0x93, 0xA7), False)])
 
+    # --- Slide 2: the known-good rendered PNG as a full-bleed image fallback ---
+    png = ROOT / "docs" / "architecture.png"
+    if png.exists():
+        slide2 = prs.slides.add_slide(prs.slide_layouts[6])
+        # Full-bleed at the slide's exact 16:9 size (the PNG is 16:9).
+        slide2.shapes.add_picture(str(png), 0, 0, width=Emu(EMU_W), height=Emu(EMU_H))
+
     prs.save(str(OUT))
     print("wrote", OUT)
 
