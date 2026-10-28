@@ -89,6 +89,7 @@ TOOLS: list[Callable[..., Any]] = [
     claim_tools.record_human_decision,
     claim_tools.issue_settlement,
     claim_tools.send_message,
+    claim_tools.broadcast_message,
     claim_tools.continue_on_fallback,
     external_action.open_external_ticket,
     # Managed rental fleet — the concrete re-plan when a claimant is without a

@@ -16,7 +16,7 @@ from channels import eum_messaging, ses_email, whatsapp
 
 def route_message(
     channel: Channel,
-    destination: str,
+    destination: "str | list[str]",
     body: str,
     *,
     subject: Optional[str] = None,
@@ -28,6 +28,10 @@ def route_message(
     * RCS      -> EUM rich card (with automatic SMS fallback via the pool)
     * SMS      -> EUM text (pool-based; also carries fallback)
     * EMAIL    -> Amazon SES (``subject`` required)
+
+    ``destination`` is a single handle for the phone channels. For EMAIL it may
+    be a single address or a list of addresses (multi-recipient SES send); the
+    phone channels expect a single handle.
     """
 
     if channel == Channel.WHATSAPP:

@@ -338,6 +338,66 @@ def send_message(claim_id: str, role: str, body: str,
     return {"claim_id": claim_id, "role": role, "channel": ch.value, "result": result}
 
 
+def broadcast_message(claim_id: str, roles: list[str], body: str,
+                      channel: Optional[str] = None) -> dict[str, Any]:
+    """Send ONE message to MULTIPLE parties in a single action (fan-out).
+
+    Use this to notify several parties at once of a shared update — e.g. a
+    schedule change or a settlement outcome relevant to the repair shop, the
+    lienholder, and the claimant. Each party is messaged individually on its own
+    preferred channel (unless ``channel`` overrides it for all), so per-party
+    delivery and the claim audit trail stay intact — this is a convenience
+    fan-out, NOT an undifferentiated blast that would lose per-party tracking.
+
+    Email parties are batched into a single SES send (multiple To addresses) when
+    no channel override forces otherwise; phone channels are sent per party.
+    Unknown roles are reported in ``errors`` rather than aborting the whole call.
+
+    Returns a per-party result map plus any errors.
+    """
+    claim = _require(claim_id)
+    results: dict[str, Any] = {}
+    errors: dict[str, str] = {}
+
+    # Resolve the requested roles to parties on this claim.
+    resolved: list[tuple[str, Party]] = []
+    for role in roles:
+        try:
+            party = claim.parties[PartyRole(role).value]
+        except (KeyError, ValueError):
+            errors[role] = "party not on claim"
+            continue
+        resolved.append((role, party))
+
+    # Batch email recipients into a single SES send (unless a channel override
+    # routes everyone the same non-email way).
+    email_batch: list[tuple[str, Party]] = []
+    for role, party in resolved:
+        ch = Channel(channel) if channel else party.preferred_channel
+        if ch == Channel.EMAIL:
+            email_batch.append((role, party))
+        else:
+            res = route_message(ch, party.contact, body)
+            results[role] = {"channel": ch.value, "result": res}
+            claim.log(f"broadcast to {role} on {ch.value}")
+
+    if email_batch:
+        to_addrs = [p.contact for _, p in email_batch]
+        subject = f"Claim {claim_id} update"
+        send_res = route_message(Channel.EMAIL, to_addrs, body, subject=subject)
+        for role, _ in email_batch:
+            results[role] = {"channel": Channel.EMAIL.value, "result": send_res}
+        claim.log(f"broadcast email to {', '.join(r for r, _ in email_batch)} "
+                  f"({len(to_addrs)} recipients)")
+
+    store.save(claim)
+    out: dict[str, Any] = {"claim_id": claim_id, "notified": list(results.keys()),
+                           "results": results}
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def continue_on_fallback(claim_id: str, role: str, body: str) -> dict[str, Any]:
     """Continue the SAME workflow on SMS when a party's RCS session degrades.
 
