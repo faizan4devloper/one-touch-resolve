@@ -824,12 +824,169 @@ def _summary_html(sess: Session) -> str:
 </body></html>"""
 
 
+def _demo_party_emails() -> dict[str, str]:
+    """Resolve the demo party email recipients for the live walkthrough.
+
+    Addresses are read from the environment so REAL inboxes can be shown in the
+    demo video while the committed repo stays generic. When unset, they default
+    to the generic ``@example.com`` placeholders (what GitHub sees) — so a clone
+    never emails a real person, and the filming addresses live only in the
+    gitignored ``.env``.
+
+        DEMO_LIENHOLDER_EMAIL   lienholder coverage/settlement notice
+        DEMO_PARTS_EMAIL        parts-supplier notice
+    """
+    return {
+        "lienholder": os.environ.get("DEMO_LIENHOLDER_EMAIL", "lienholder@example.com").strip(),
+        "parts": os.environ.get("DEMO_PARTS_EMAIL", "parts@example.com").strip(),
+    }
+
+
+def _today_str() -> str:
+    import datetime as _dt
+    return _dt.datetime.now(_dt.timezone.utc).strftime("%d %b %Y")
+
+
+def _party_email_html(*, accent: str, eyebrow: str, heading: str, intro: str,
+                      rows: list, note: str) -> str:
+    """Render an official-looking, branded party notice (inline-styled for email).
+
+    Matches the One Touch Resolve summary email's visual language: a gradient
+    header, a clean detail table, a highlighted note, and a service footer — so
+    the lienholder/parts notices read like formal insurer communications.
+    """
+    row_html = "".join(
+        f'<tr>'
+        f'<td style="padding:10px 16px;border-bottom:1px solid #eef0f4;color:#697386;'
+        f'font-size:13px;width:168px">{k}</td>'
+        f'<td style="padding:10px 16px;border-bottom:1px solid #eef0f4;color:#1a1f36;'
+        f'font-size:13px;font-weight:600">{v}</td></tr>'
+        for k, v in rows
+    )
+    return (
+        '<!doctype html><html><body style="margin:0;background:#f6f8fb;'
+        'font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">'
+        '<div style="max-width:560px;margin:0 auto;padding:24px">'
+        f'<div style="background:linear-gradient(135deg,{accent},{accent}cc);'
+        'border-radius:16px 16px 0 0;padding:20px 24px">'
+        f'<div style="color:#ffffff;opacity:.85;font-size:11px;font-weight:700;'
+        f'letter-spacing:.08em">{eyebrow}</div>'
+        f'<div style="color:#fff;font-size:18px;font-weight:700;letter-spacing:-.02em;'
+        f'margin-top:3px">{heading}</div>'
+        '<div style="color:#ffffffcc;font-size:12px;margin-top:4px">'
+        'One Touch Resolve · automated claims coordination</div></div>'
+        '<div style="background:#fff;border:1px solid #e6e9ef;border-top:none;'
+        'border-radius:0 0 16px 16px;padding:16px 10px 18px">'
+        f'<p style="color:#3c4257;font-size:14px;line-height:1.5;padding:4px 16px 8px;'
+        f'margin:0">{intro}</p>'
+        f'<table style="width:100%;border-collapse:collapse;margin:6px 0">{row_html}</table>'
+        f'<div style="margin:14px 16px;padding:12px 14px;background:{accent}14;'
+        f'border:1px solid {accent}33;border-radius:10px;color:{accent};font-size:13px">'
+        f'{note}</div>'
+        '<p style="color:#8792a2;font-size:11px;text-align:center;margin:14px 0 4px">'
+        'One Touch Resolve · powered by Amazon Bedrock AgentCore &amp; AWS Communication '
+        'Developer Services (SES, End User Messaging)</p>'
+        '</div></div></body></html>'
+    )
+
+
+def _send_party_emails(sess: Session) -> None:
+    """Send distinct lienholder + parts-supplier notices (multi-party fan-out).
+
+    Only fires when the demo recipients are explicitly configured via
+    DEMO_LIENHOLDER_EMAIL / DEMO_PARTS_EMAIL (i.e. during filming). With the
+    generic @example.com defaults it is skipped, so a plain clone/CI run never
+    attempts a real send to a placeholder address. Recorded on the session so
+    the dashboard can show the fan-out to separate party inboxes.
+    """
+    if sess.facts.get("party_emails"):
+        return
+    f = sess.facts
+    parties = _demo_party_emails()
+    # Skip unless real (non-placeholder) addresses were configured for filming.
+    configured = {k: v for k, v in parties.items() if v and not v.endswith("@example.com")}
+    if not configured:
+        return
+    claim_id = f.get("claim_id", "claim")
+    t = f.get("triage", {}) or {}
+    sent: dict[str, Any] = {}
+
+    if "lienholder" in configured:
+        rows = [
+            ("Claim reference", claim_id),
+            ("Policyholder", sess.customer_name or "—"),
+            ("Vehicle", sess.vehicle or "—"),
+            ("Loss type", (f.get("peril") or "auto_collision").replace("_", " ").title()),
+            ("Date of loss", _today_str()),
+            ("Coverage status", "Active — claim open"),
+            ("Next step", "Settlement letter to follow on adjuster approval"),
+        ]
+        html = _party_email_html(
+            accent="#0f62fe",
+            eyebrow="LIENHOLDER COVERAGE NOTICE",
+            heading="Coverage confirmation",
+            intro=(f"This is a formal notice that an auto claim has been opened on the "
+                   f"policy associated with your lien. Coverage is active and the claim "
+                   f"is in coordinated processing. No action is required from you at this "
+                   f"time; a settlement letter will follow once the adjuster approves."),
+            rows=rows,
+            note="Formal, auditable notice delivered via Amazon SES.",
+        )
+        body = (f"Coverage confirmation — claim {claim_id}\n\n"
+                f"An auto claim has been opened on the policy associated with your lien. "
+                f"Coverage is active; a settlement letter will follow on adjuster approval.\n\n"
+                f"Policyholder: {sess.customer_name}\nVehicle: {sess.vehicle}\n"
+                f"Claim: {claim_id}\n\n— One Touch Resolve, on behalf of the carrier")
+        sent["lienholder"] = {
+            "to": configured["lienholder"],
+            "result": _send_email(configured["lienholder"],
+                                  f"Coverage notice — claim {claim_id}", body, html),
+        }
+
+    if "parts" in configured:
+        part = (f.get("part") or "OEM replacement component")
+        rows = [
+            ("Claim reference", claim_id),
+            ("Vehicle", sess.vehicle or "—"),
+            ("Component required", part),
+            ("Damage severity", str(t.get("severity", "—")).title()),
+            ("Requested by", _today_str()),
+            ("Action needed", "Confirm availability + earliest ETA"),
+        ]
+        html = _party_email_html(
+            accent="#ED7100",
+            eyebrow="PARTS SUPPLIER REQUEST",
+            heading="Parts availability request",
+            intro=(f"We are coordinating repairs for the claim below and need to confirm "
+                   f"parts availability. Please reply with current availability and the "
+                   f"earliest ETA for the required component so we can schedule the repair."),
+            rows=rows,
+            note="Time-sensitive — a prompt ETA keeps the repair on schedule.",
+        )
+        body = (f"Parts availability request — claim {claim_id}\n\n"
+                f"Please confirm availability and earliest ETA for: {part}.\n"
+                f"Vehicle: {sess.vehicle}\nClaim: {claim_id}\n\n"
+                f"— One Touch Resolve, on behalf of the carrier")
+        sent["parts"] = {
+            "to": configured["parts"],
+            "result": _send_email(configured["parts"],
+                                  f"Parts request — claim {claim_id}", body, html),
+        }
+
+    f["party_emails"] = sent
+    names = ", ".join(sent.keys())
+    _system(sess, f"Party notices emailed ({names})", "summary")
+
+
 def _finish(sess: Session) -> None:
     """Send the real SES summary email (HTML + text) and post the closing message."""
     # Idempotent: the summary (and its SES email) is sent exactly once, even if
     # the SUMMARY step is re-entered by repeated taps.
     if sess.facts.get("summary_email"):
         return
+    # Multi-party fan-out: distinct lienholder + parts notices when configured
+    # for the demo (no-op with the generic @example.com defaults).
+    _send_party_emails(sess)
     f = sess.facts
     lines = [
         f"Hi {sess.customer_name},", "",
