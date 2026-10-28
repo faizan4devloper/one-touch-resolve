@@ -5,8 +5,9 @@ import {
 } from "lucide-react";
 import { IPhoneFrame } from "./IPhoneFrame";
 import { useSession } from "../SessionContext";
-import { decodeVin, looksLikeVin, SAMPLE_VIN } from "./vehicle";
+import { decodeVin, looksLikeVin } from "./vehicle";
 import { getDeviceLocation } from "./geo";
+import { nearbyRepairShops, drivingEtaMin, type Shop } from "./nearby";
 import { AccidentMap } from "../components/AccidentMap";
 import {
   startSession,
@@ -61,29 +62,33 @@ export default function Phone() {
   const towStageRef = useRef(-1);
   const animatingRef = useRef(false);
 
-  // Start form — blank so a new user enters THEIR own details (personalized).
-  const [name, setName] = useState("");
-  const [vehicle, setVehicle] = useState("");
-  const [location, setLocation] = useState("");
+  // Start form — pre-filled with a sample demo persona for a one-tap start.
+  // A sample VIN (2003 Honda Accord) so "Decode VIN" works out of the box.
+  const [name, setName] = useState("Alex Rivera");
+  const [vehicle, setVehicle] = useState("1HGCM82633A004352");
+  const [location, setLocation] = useState("Market Street, San Francisco");
   const [scenario, setScenario] = useState(SCENARIOS[0].value);
   // Free-text description — when non-empty it OVERRIDES the preset and is sent
   // straight to the real Bedrock triage (proves the AI isn't scripted).
   const [customDesc, setCustomDesc] = useState("");
 
   // Real vehicle lookup (NHTSA vPIC) + real device GPS (Geolocation + OSM).
-  const [vin, setVin] = useState("");
   const [vinBusy, setVinBusy] = useState(false);
   const [vinNote, setVinNote] = useState("");
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoNote, setGeoNote] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [startError, setStartError] = useState("");
+  // Real location-aware data (no static vendors): nearby shops + real ETA.
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [shopsBusy, setShopsBusy] = useState(false);
+  const [etaMin, setEtaMin] = useState<number | null>(null);
 
   const onDecodeVin = useCallback(async () => {
     if (vinBusy) return;
     setVinBusy(true);
     setVinNote("");
-    const info = await decodeVin(vin);
+    const info = await decodeVin(vehicle);
     if (info.source === "nhtsa" && info.label) {
       setVehicle(info.label);
       setVinNote(`✓ NHTSA: ${info.label}${info.fuel ? ` · ${info.fuel}` : ""}`);
@@ -91,7 +96,7 @@ export default function Phone() {
       setVinNote("Couldn't decode that VIN — type your vehicle instead.");
     }
     setVinBusy(false);
-  }, [vin, vinBusy]);
+  }, [vehicle, vinBusy]);
 
   const onUseLocation = useCallback(async () => {
     if (geoBusy) return;
@@ -102,6 +107,16 @@ export default function Phone() {
       setLocation(g.address);
       setCoords({ lat: g.lat, lng: g.lng });
       setGeoNote(`✓ Live GPS · ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}`);
+      // Real location-aware lookups keyed off the captured GPS. No fake fallback:
+      // on failure the lists stay empty and the UI says so honestly.
+      setShopsBusy(true);
+      const found = await nearbyRepairShops(g.lat, g.lng);
+      setShops(found);
+      if (found[0]) {
+        const eta = await drivingEtaMin({ lat: found[0].lat, lng: found[0].lng }, { lat: g.lat, lng: g.lng });
+        setEtaMin(eta);
+      }
+      setShopsBusy(false);
     } else {
       setGeoNote(g.error || "Location unavailable — type it instead.");
     }
@@ -231,9 +246,29 @@ export default function Phone() {
         ]);
         scrollDown();
         setTyping(true);
-        // Upload for real vision triage, then advance with the "Photo sent" tap.
-        await uploadPhoto(session.session_id, dataUrl, file.type || "image/jpeg");
+        // Upload for real vision triage. The model first validates the image is
+        // a vehicle; if not, we reject honestly and let the user re-upload.
+        const res = await uploadPhoto(session.session_id, dataUrl, file.type || "image/jpeg");
         setTyping(false);
+        const triage = (res && (res as any).triage) || {};
+        if (triage.valid === false) {
+          // Invalid / irrelevant image — do NOT advance. Show the agent's reason
+          // and keep the photo step open so the user can send a real one.
+          const rid = `reject-${Date.now()}`;
+          seenRef.current.add(rid);
+          setVisible((v) => [
+            ...v,
+            {
+              id: rid, sender: "agent", kind: "safety", ts: Date.now() / 1000, choices: [],
+              text: (triage.reject_reason || "That doesn't look like a photo of your vehicle.") +
+                    " Please share a clear photo of the damage.",
+            } as Msg,
+          ]);
+          setChoices(["Photo sent"]); // keep the upload action available for retry
+          scrollDown();
+          return; // stay on the photo step
+        }
+        // Valid vehicle photo — advance the journey.
         const s = await respond(session.session_id, "Photo sent");
         await syncSession(s);
       } finally {
@@ -397,69 +432,52 @@ export default function Phone() {
                 <span className="brand-mark">AA</span> One Touch Resolve
               </div>
               <p className="intro-tag">
-                Simulate a car accident and watch the agent coordinate every party
-                for you. <b>You only tap Yes / No</b> — no calls, no forms after this.
+                Simulate an accident — the agent coordinates everything. You just tap Yes / No.
               </p>
 
               <div className="start-steps">
                 <div className="start-step">
-                  <span className="step-n">1</span>
                   <label>
-                    Your name
+                    Name
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name"
+                      placeholder="Your name"
                       autoComplete="name"
                     />
                   </label>
                 </div>
                 <div className="start-step">
-                  <span className="step-n">2</span>
                   <label>
-                    Your vehicle <span className="step-hint">VIN decodes via NHTSA (live)</span>
+                    Vehicle
                     <div className="field-with-btn">
                       <input
-                        value={vin}
-                        onChange={(e) => { setVin(e.target.value); setVinNote(""); }}
-                        placeholder="Enter VIN to auto-fill"
-                        autoCapitalize="characters"
+                        value={vehicle}
+                        onChange={(e) => { setVehicle(e.target.value); setVinNote(""); }}
+                        placeholder="VIN or make/model (e.g. 2022 Toyota Camry)"
                       />
                       <button
                         type="button"
                         className="field-btn"
                         onClick={onDecodeVin}
-                        disabled={vinBusy || !looksLikeVin(vin)}
+                        disabled={vinBusy || !looksLikeVin(vehicle)}
                         title="Decode VIN via NHTSA"
                       >
                         <Search size={14} strokeWidth={2.3} />
-                        {vinBusy ? "…" : "Decode"}
+                        {vinBusy ? "…" : "Decode VIN"}
                       </button>
                     </div>
-                    <input
-                      style={{ marginTop: 7 }}
-                      value={vehicle}
-                      onChange={(e) => setVehicle(e.target.value)}
-                      placeholder="…or type it: e.g. 2022 Toyota Camry"
-                    />
-                    {vinNote ? (
-                      <span className="field-note">{vinNote}</span>
-                    ) : (
-                      <button type="button" className="field-link" onClick={() => setVin(SAMPLE_VIN)}>
-                        Use a sample VIN
-                      </button>
-                    )}
+                    {vinNote && <span className="field-note">{vinNote}</span>}
                   </label>
                 </div>
                 <div className="start-step">
-                  <span className="step-n">3</span>
                   <label>
-                    Where are you? <span className="step-hint">live device GPS</span>
+                    Location
                     <div className="field-with-btn">
                       <input
                         value={location}
                         onChange={(e) => { setLocation(e.target.value); }}
-                        placeholder="e.g. Market Street, San Francisco"
+                        placeholder="Where are you?"
                       />
                       <button
                         type="button"
@@ -477,13 +495,41 @@ export default function Phone() {
                 </div>
                 {coords && (
                   <div className="start-map">
-                    <AccidentMap lat={coords.lat} lng={coords.lng} etaMin={8} />
+                    <AccidentMap lat={coords.lat} lng={coords.lng} etaMin={etaMin} />
+                    <div className="nearby">
+                      <div className="nearby-head">
+                        Nearby repair shops <span className="nearby-src">· live OpenStreetMap</span>
+                      </div>
+                      {shopsBusy ? (
+                        <ul className="nearby-list" aria-busy="true">
+                          {[0, 1, 2].map((i) => (
+                            <li key={i} className="nearby-skel">
+                              <span className="skel-line skel-name" />
+                              <span className="skel-line skel-st" />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : shops.length > 0 ? (
+                        <ul className="nearby-list">
+                          {shops.map((s, i) => (
+                            <li key={i}>
+                              <span className="nearby-name">{s.name}</span>
+                              {s.street && <span className="nearby-st">· {s.street}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="nearby-empty">No shops found nearby (or service unavailable).</div>
+                      )}
+                      {etaMin != null && (
+                        <div className="nearby-eta">Real driving ETA to nearest shop: ~{etaMin} min <span className="nearby-src">· OSRM</span></div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="start-step">
-                  <span className="step-n">4</span>
                   <label>
-                    What happened? <span className="step-hint">drives the live Bedrock triage</span>
+                    What happened?
                     <div className="scenario-chips">
                       {SCENARIOS.map((s) => (
                         <button
@@ -500,7 +546,7 @@ export default function Phone() {
                       className="scenario-text"
                       value={customDesc}
                       onChange={(e) => setCustomDesc(e.target.value)}
-                      placeholder="…or describe it in your own words — the real AI will triage what you write"
+                      placeholder="…or describe it yourself (real AI triage)"
                       rows={2}
                     />
                     {customDesc.trim() && (
@@ -510,27 +556,12 @@ export default function Phone() {
                 </div>
               </div>
 
-              <div className="chips">
-                <span className="chip">
-                  <ShieldCheck size={13} /> Bedrock triage
-                </span>
-                <span className="chip">
-                  <Truck size={13} /> Live tow ETA
-                </span>
-                <span className="chip">
-                  <Car size={13} /> SES summary
-                </span>
-              </div>
-
               {startError && <p className="start-error">{startError}</p>}
               <button className="cta" onClick={onStart} disabled={busy}>
                 <Camera size={17} strokeWidth={2.4} />
-                {busy ? "Connecting…" : "Start — the agent will message you"}
+                {busy ? "Connecting…" : "Start"}
               </button>
-              <p className="fine">
-                Next: the agent texts you on WhatsApp and guides you with Yes/No taps ·
-                real Amazon Bedrock triage · real email summary via Amazon SES
-              </p>
+              <p className="fine">Real Amazon Bedrock triage · live SES email</p>
             </motion.div>
           </motion.div>
         )}

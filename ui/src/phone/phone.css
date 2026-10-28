@@ -186,6 +186,7 @@ body {
 /* Thread */
 .thread {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 14px 12px 8px;
   display: flex;
@@ -330,7 +331,7 @@ body {
   min-height: 66px;
   align-items: center;
 }
-.qr {
+.qr { min-height: 46px;
   flex: 1;
   min-width: 44%;
   padding: 13px 14px;
@@ -373,19 +374,21 @@ body {
   z-index: 25;
   background: linear-gradient(160deg, #ffffff, #eef1f6);
   display: flex;
-  align-items: center;          /* center the card vertically */
-  justify-content: center;
-  padding: 44px 16px 20px; /* clear the status bar / notch at top */
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;   /* top-align: tall card scrolls from the top */
+  padding: 44px 14px 24px;       /* clear the status bar / notch at top */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 .start-card {
   width: 100%;
   max-width: 340px;
+  flex: none;
   background: #ffffff;
   border: 1px solid #e6e9ef;
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 16px;
   box-shadow: 0 16px 48px rgba(26, 31, 54, 0.14);
 }
 .brand {
@@ -424,7 +427,7 @@ body {
 .intro-tag b { color: #1a1f36; font-weight: 650; }
 
 /* Guided first-run: numbered steps so a new user knows exactly what to fill. */
-.start-steps { display: flex; flex-direction: column; gap: 11px; margin-bottom: 14px; }
+.start-steps { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
 .start-step { display: flex; align-items: flex-start; gap: 10px; }
 .start-step .step-n {
   flex: none; width: 20px; height: 20px; margin-top: 22px;
@@ -437,7 +440,7 @@ body {
 /* Input + inline action (VIN decode, Locate) */
 .field-with-btn { display: flex; gap: 7px; margin-top: 5px; }
 .field-with-btn input { flex: 1; min-width: 0; margin-top: 0 !important; }
-.field-btn {
+.field-btn { min-height: 44px;
   flex: none; display: inline-flex; align-items: center; gap: 5px;
   background: #0f62fe; color: #fff; border: none; border-radius: 8px;
   padding: 0 13px; font-family: var(--font-sans); font-size: 13px; font-weight: 650;
@@ -453,7 +456,7 @@ body {
 
 /* Scenario: quick-pick chips + optional free text (both feed real triage). */
 .scenario-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.scenario-chip {
+.scenario-chip { min-height: 44px;
   flex: 1 1 auto; padding: 8px 10px; border-radius: 8px;
   border: 1.5px solid #d6dbe4; background: #f6f8fb; color: #3c4257;
   font-family: var(--font-sans); font-size: 12px; font-weight: 600; cursor: pointer;
@@ -471,7 +474,7 @@ body {
 /* Real OSM accident map + animated tow marker */
 .start-map { margin: 2px 0 14px; }
 .amap {
-  position: relative; width: 100%; height: 150px; border-radius: 12px; overflow: hidden;
+  position: relative; width: 100%; height: 120px; border-radius: 12px; overflow: hidden;
   border: 1px solid #d6dbe4; background: #e9edf4;
 }
 .amap-frame { width: 100%; height: 100%; border: 0; display: block; filter: saturate(1.02); }
@@ -608,3 +611,24 @@ body {
 .thread::-webkit-scrollbar {
   width: 0;
 }
+
+/* Real nearby repair shops (OSM) under the map */
+.nearby { margin-top: 8px; border: 1px solid #e3e6ec; border-radius: 10px; padding: 10px 12px; background: #fbfcfe; }
+.nearby-head { font-size: 11.5px; font-weight: 700; color: #3c4257; letter-spacing: -0.005em; }
+.nearby-src { font-weight: 500; color: #8792a2; }
+.nearby-list { list-style: none; margin: 7px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.nearby-list li { font-size: 12.5px; color: #1a1f36; line-height: 1.3; }
+.nearby-name { font-weight: 600; }
+.nearby-st { color: #697386; }
+.nearby-empty { font-size: 12px; color: #8792a2; margin-top: 6px; }
+.nearby-eta { margin-top: 8px; font-size: 12px; font-weight: 600; color: #0f7a53; }
+
+/* Skeleton loading (2026 pattern: preview the list shape, not a text spinner) */
+.nearby-skel { display: flex; flex-direction: column; gap: 4px; }
+.skel-line { display: block; height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, #eef1f6 25%, #e2e7ef 37%, #eef1f6 63%);
+  background-size: 400% 100%; animation: skel 1.3s ease-in-out infinite; }
+.skel-name { width: 62%; }
+.skel-st { width: 40%; height: 8px; }
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .skel-line { animation: none; } }
