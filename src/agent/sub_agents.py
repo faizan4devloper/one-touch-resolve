@@ -12,6 +12,7 @@ prefers, and the system prompt that scopes its reasoning.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 from shared.models import Channel, PartyRole
@@ -76,3 +77,54 @@ ALL_SUB_AGENTS: list[SubAgentSpec] = [
     PARTS_AGENT,
     LIENHOLDER_AGENT,
 ]
+
+
+def _tool_name(spec: "SubAgentSpec") -> str:
+    """Delegation-tool name the supervisor sees, e.g. ``ask_repair_shop_agent``."""
+    return f"ask_{spec.role.value}_agent"
+
+
+def build_subagent_tools() -> list:
+    """Build each specialist sub-agent as a callable *tool* the supervisor can
+    delegate to — the agents-as-tools pattern that implements AgentCore
+    multi-agent collaboration.
+
+    Each returned callable is a Strands ``@tool``: when the supervisor calls it,
+    a dedicated specialist :class:`strands.Agent` (its own scoped system prompt,
+    same Bedrock model) reasons about ONLY that party's constraints and returns a
+    concise COMMITTED/BLOCKED-style report. The supervisor reconciles those
+    reports at the commit gate.
+
+    Imported lazily so the package stays importable without the Strands SDK
+    (offline tests and the pure tool layer never touch this).
+    """
+    from strands import Agent, tool  # type: ignore
+    from strands.models import BedrockModel  # type: ignore
+
+    model = BedrockModel(
+        model_id=os.environ.get("BEDROCK_MODEL_ID", "amazon.nova-pro-v1:0"),
+        region_name=os.environ.get("AWS_REGION", "us-east-1"),
+    )
+
+    tools: list = []
+    for spec in ALL_SUB_AGENTS:
+        # Bind the spec into a factory so each closure captures its own spec.
+        def _make(spec: SubAgentSpec):
+            specialist = Agent(model=model, system_prompt=spec.system_prompt)
+
+            def _delegate(request: str) -> str:
+                """Delegate to this specialist sub-agent and return its report."""
+                return str(specialist(request))
+
+            _delegate.__name__ = _tool_name(spec)
+            _delegate.__doc__ = (
+                f"Delegate to the {spec.name} (owns the {spec.role.value} party, "
+                f"prefers {spec.channel.value}). Pass the task/context as "
+                f"`request`; returns the specialist's COMMITTED/BLOCKED report. "
+                f"Use this to reason about the {spec.role.value}'s constraints "
+                f"instead of deciding for them."
+            )
+            return tool(_delegate)
+
+        tools.append(_make(spec))
+    return tools

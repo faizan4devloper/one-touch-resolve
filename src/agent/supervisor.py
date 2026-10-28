@@ -18,7 +18,7 @@ from typing import Any, Callable
 from agent.tools import claim_tools
 from agent.tools import external_action
 from agent.tools import fleet_tools
-from agent.sub_agents import ALL_SUB_AGENTS
+from agent.sub_agents import ALL_SUB_AGENTS, build_subagent_tools
 
 SYSTEM_PROMPT = """You are the One Touch Resolve supervisor for insurance
 claims. Your job is to drive a claim from FNOL to settlement by coordinating
@@ -29,6 +29,13 @@ each on the channel that suits them:
 - Email (SES) for lienholder/parts formal notices
 
 Rules:
+- Delegate per-party reasoning to the specialist sub-agents. For anything that
+  depends on a single party's constraints, call that party's sub-agent tool —
+  ask_claimant_agent, ask_repair_shop_agent, ask_parts_supplier_agent, or
+  ask_lienholder_agent — passing the task/context as `request`, and use its
+  COMMITTED/BLOCKED report to drive your plan. You are the supervisor: you
+  reconcile their reports at the commit gate; you do not decide a party's
+  position for it.
 - Never advance to settlement until the commit gate reports all required parties
   COMMITTED. Call evaluate_commit_gate to check.
 
@@ -116,7 +123,14 @@ def build_agent():
     )
 
     wrapped = [tool(fn) for fn in TOOLS]
-    agent = Agent(model=model, system_prompt=SYSTEM_PROMPT, tools=wrapped)
+    # Multi-agent collaboration: attach the 4 specialist sub-agents as
+    # delegation tools (agents-as-tools). The supervisor calls ask_<party>_agent
+    # to have a specialist reason about that party, then reconciles the reports
+    # at the commit gate. This makes "1 supervisor + 4 sub-agents" real at
+    # runtime, not just a diagram.
+    subagent_tools = build_subagent_tools()
+    agent = Agent(model=model, system_prompt=SYSTEM_PROMPT,
+                  tools=wrapped + subagent_tools)
     return agent
 
 
