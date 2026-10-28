@@ -151,4 +151,4 @@ record are channel-agnostic.
 - AgentCore multi-agent collaboration GA — AWS, March 2025; AgentCore Runtime GA — AWS, 2026.
 
 > Full analysis, competitive landscape, and GitHub prior-art check: `docs/RESEARCH_AND_POSITIONING.md`.
-> End-to-end agentic workflow: `docs/SOLUTION_FLOW.md`. Pitch: `docs/pitch-script.md`.
+> End-to-end agentic workflow: `docs/SOLUTION_FLOW.md`.
