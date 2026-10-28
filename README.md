@@ -6,6 +6,24 @@
 
 ---
 
+## For judges / reviewers — verify in 2 minutes
+
+```bash
+# 1. Prove TWO AWS CDS services are called LIVE at runtime, through the repo's
+#    own channel adapters (not the AWS CLI). Prints AWS-returned MessageIds:
+python3 scripts/send_live_cds.py        # real Amazon SES + real AWS End User Messaging (SMS)
+
+# 2. Full FNOL -> settlement agentic journey, offline + deterministic (no AWS):
+make demo                               # 5 parties, 4 channels, code-verified outcome
+make test                               # 56 unit/integration tests
+```
+
+- **AWS CDS at runtime:** `channels/ses_email.py` → SES `SendEmail`; `channels/eum_messaging.py` → EUM `SendTextMessage` (Pinpoint SMS/Voice v2). Both imported and called in the engine's own code.
+- **Agentic core:** Amazon Bedrock AgentCore (Runtime + Memory) · Strands · Nova Pro (+ Nova Pro **vision** for real damage-photo triage).
+- **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) + [`docs/architecture.png`](docs/architecture.png) · **Submission writeup:** [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+
+---
+
 ## The problem
 
 Property insurance claims now take **40.7 days on average** from First Notice of Loss (FNOL) to final payment — **among the longest since J.D. Power began tracking in 2008** (J.D. Power 2026 U.S. Property Claims Satisfaction Study; repair cycle alone averages 29.6 days). Policyholders expect resolution in **~11 days**; digital-first carriers already close in **~15 days**.
