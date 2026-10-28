@@ -36,7 +36,7 @@ html,body{margin:0;padding:0;background:#fff;font-family:'Roboto',Arial,sans-ser
 .node img{display:block;width:46px;height:46px;object-fit:contain;margin:0 auto}
 .node .label{font-size:12.5px;font-weight:700;line-height:15px;margin-top:6px}
 .node .small{font-size:10.5px;line-height:13px;color:#5a6978;margin-top:2px}
-.node .svc{display:block;font-size:9.5px;font-weight:700;color:#ED7100;margin-top:2px}
+.node .svc{display:block;font-size:9px;font-weight:700;color:#ED7100;margin-top:1px}
 
 .badge{position:absolute;z-index:6;width:26px;height:26px;background:#ED7100;border:2px solid #fff;border-radius:50%;
   color:#fff;font-weight:700;font-size:14px;line-height:22px;text-align:center;box-shadow:0 1px 3px #0003}
@@ -48,7 +48,7 @@ html,body{margin:0;padding:0;background:#fff;font-family:'Roboto',Arial,sans-ser
 .gate .gd{font-size:10px;color:#5a6978;margin:5px 14px 0;line-height:14px}
 .gate .pills{margin-top:8px;display:flex;gap:5px;justify-content:center}
 .gpill{font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:4px}
-.p-closed{background:#fee2e2;color:#991b1b}.p-replan{background:#fef3c7;color:#92400e}.p-open{background:#d1fae5;color:#065f46}
+.p-closed{background:#fee2e2;color:#991b1b}.p-replan{background:#fef3c7;color:#92400e}.p-open{background:#d1fae5;color:#065f46}.p-approve{background:#ede9fe;color:#5b21b6}
 
 .chip{position:absolute;z-index:6;border:1px solid #dbe2e9;border-radius:5px;background:#fff;padding:3px 9px;
   font-size:10px;font-weight:600;color:#50607a;white-space:nowrap;line-height:13px;box-shadow:0 1px 2px #0000000d}
@@ -122,54 +122,55 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
   <div class="group band b-data"><div class="gtitle">4 · State, Persistence &amp; Observability</div></div>
 
   <!-- ===== CDS band nodes ===== -->
-  <div class="node" style="left:110px;top:248px;width:120px">
+  <div class="node" style="left:110px;top:240px;width:120px">
     <img src="assets/icons/whatsapp.svg" alt="WhatsApp">
     <div class="label">EUM Social</div><div class="small">WhatsApp — FNOL media</div><span class="svc">AWS End User Messaging Social</span>
   </div>
-  <div class="node" style="left:380px;top:248px;width:120px">
+  <div class="node" style="left:380px;top:240px;width:120px">
     <img src="assets/icons/rcs.svg" alt="RCS/SMS">
     <div class="label">EUM RCS / SMS</div><div class="small">cards · RCS→SMS fallback</div><span class="svc">AWS End User Messaging</span>
   </div>
-  <div class="node" style="left:640px;top:248px;width:120px">
+  <div class="node" style="left:640px;top:240px;width:120px">
     <img src="assets/icons/ses.svg" alt="SES">
     <div class="label">Amazon SES</div><div class="small">coverage / settlement</div><span class="svc">Amazon SES</span>
   </div>
-  <div class="node" style="left:1090px;top:248px;width:140px">
+  <div class="node" style="left:1090px;top:240px;width:140px">
     <img src="assets/icons/router.svg" alt="router">
     <div class="label">Channel router</div><div class="small">right channel per party</div>
   </div>
 
   <!-- ===== Ingest band nodes ===== -->
   <div class="node" style="left:230px;top:386px;width:110px">
-    <img src="assets/icons/sns.png" alt="SNS">
+    <img src="assets/icons/sns.svg" alt="SNS">
     <div class="label">Amazon SNS</div><div class="small">topic per channel</div>
   </div>
   <span class="badge" style="left:316px;top:380px">1</span>
   <div class="node" style="left:460px;top:386px;width:120px">
-    <img src="assets/icons/lambda.png" alt="Lambda">
+    <img src="assets/icons/lambda.svg" alt="Lambda">
     <div class="label">Dispatcher</div><div class="small">normalize·dedupe·invoke</div>
   </div>
   <span class="badge" style="left:566px;top:380px">2</span>
   <div class="node" style="left:720px;top:386px;width:110px">
-    <img src="assets/icons/s3.png" alt="S3">
+    <img src="assets/icons/s3.svg" alt="S3">
     <div class="label">Amazon S3</div><div class="small">FNOL photos/video</div>
   </div>
   <div class="node" style="left:960px;top:386px;width:120px">
-    <img src="assets/icons/dynamodb.png" alt="DynamoDB">
+    <img src="assets/icons/dynamodb.svg" alt="DynamoDB">
     <div class="label">Dedupe table</div><div class="small">idempotency · TTL</div>
   </div>
 
   <!-- ===== Core band nodes ===== -->
   <div class="node" style="left:200px;top:548px;width:120px">
-    <img src="assets/icons/agentcore.png" alt="Supervisor">
+    <img src="assets/icons/agentcore.svg" alt="Supervisor">
     <div class="label">Supervisor</div><div class="small">plans·reconciles·re-plans</div>
   </div>
   <span class="badge" style="left:306px;top:542px">3</span>
 
   <div class="gate">
-    <div class="gt">◆ MULTI-PARTY COMMIT GATE</div>
-    <div class="gd">blocks advance until all required parties COMMIT · re-plans on BLOCKED</div>
-    <div class="pills"><span class="gpill p-closed">CLOSED</span><span class="gpill p-replan">RE-PLAN</span><span class="gpill p-open">OPEN</span></div>
+    <div class="gt">◆ MULTI-PARTY COMMIT GATE  ·  🔒 HUMAN APPROVAL</div>
+    <div class="gd">blocks advance until all required parties COMMIT · re-plans on BLOCKED ·
+      then PENDING_APPROVAL: adjuster Approve/Hold — no payout without a human (code-enforced)</div>
+    <div class="pills"><span class="gpill p-closed">CLOSED</span><span class="gpill p-replan">RE-PLAN</span><span class="gpill p-open">OPEN</span><span class="gpill p-approve">APPROVE</span></div>
   </div>
 
   <div class="node" style="left:1210px;top:556px;width:124px">
@@ -178,34 +179,38 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
   </div>
   <span class="badge" style="left:1320px;top:550px">4</span>
   <div class="node" style="left:1360px;top:556px;width:110px">
-    <img src="assets/icons/lambda.png" alt="tools">
+    <img src="assets/icons/lambda.svg" alt="tools">
     <div class="label">Tools (Lambda)</div><div class="small">open·estimate·settle</div>
   </div>
   <div class="node" style="left:1230px;top:470px;width:120px">
-    <img src="assets/icons/agentcore.png" alt="Memory">
+    <img src="assets/icons/agentcore.svg" alt="Memory">
     <div class="label">AgentCore Memory</div><div class="small">state by actor_id</div>
   </div>
   <div class="node" style="left:1450px;top:690px;width:110px">
-    <img src="assets/icons/bedrock.png" alt="Bedrock">
+    <img src="assets/icons/bedrock.svg" alt="Bedrock">
     <div class="label">Bedrock · Nova</div><div class="small">triage + tool-calling</div>
   </div>
 
   <!-- ===== Data band nodes ===== -->
   <div class="node" style="left:240px;top:742px;width:120px">
-    <img src="assets/icons/dynamodb.png" alt="coe-claims">
+    <img src="assets/icons/dynamodb.svg" alt="coe-claims">
     <div class="label">coe-claims</div><div class="small">single source of truth · PITR</div>
   </div>
   <div class="node" style="left:560px;top:742px;width:120px">
-    <img src="assets/icons/cloudwatch.png" alt="CloudWatch">
+    <img src="assets/icons/cloudwatch.svg" alt="CloudWatch">
     <div class="label">CloudWatch</div><div class="small">DLQ + error alarms</div>
   </div>
   <div class="node" style="left:820px;top:742px;width:120px">
     <img src="assets/icons/iam.svg" alt="IAM">
     <div class="label">IAM least-priv</div><div class="small">scoped send·ddb·bedrock</div>
   </div>
+  <div class="node" style="left:1080px;top:742px;width:130px">
+    <img src="assets/icons/dynamodb.svg" alt="coe-fleet">
+    <div class="label">coe-fleet</div><div class="small">managed rental fleet · atomic reserve</div>
+  </div>
 
   <!-- flow chips -->
-  <div class="chip blue" style="left:360px;top:338px">HTTPS inbound</div>
+  <div class="chip blue" style="left:92px;top:404px">HTTPS inbound</div>
   <div class="chip teal" style="left:1183px;top:586px">A2A</div>
   <div class="chip orange" style="left:1448px;top:665px">InvokeModel</div>
   <div class="chip purple" style="left:1452px;top:430px">outbound CDS</div>
@@ -222,7 +227,7 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
   <div class="metrics">
     <div class="m"><div class="v">3 CDS</div><div class="l">WhatsApp·RCS/SMS·SES</div></div>
     <div class="m"><div class="v">1+4</div><div class="l">supervisor + sub-agents</div></div>
-    <div class="m"><div class="v">1 gate</div><div class="l">blocks until all commit</div></div>
+    <div class="m"><div class="v">1 gate</div><div class="l">commit + human approval</div></div>
     <div class="m"><div class="v">1 CDK</div><div class="l">one-command deploy</div></div>
     <div class="m"><div class="v">re-skin</div><div class="l">swap roster → vertical</div></div>
   </div>
