@@ -15,7 +15,8 @@
       "codeLocation": "app/coe_supervisor/",
       "runtimeVersion": "PYTHON_3_14",
       "networkMode": "PUBLIC",
-      "protocol": "HTTP"
+      "protocol": "HTTP",
+      "executionRoleArn": "arn:aws:iam::040504913362:role/HCL-User-Role-Aiml-BedrockAgentCore-CodeBuild"
     }
   ],
   "memories": [
