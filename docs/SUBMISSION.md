@@ -119,7 +119,7 @@ sell a configured "Coordination Agent" per vertical.
 
 | Criterion | Weight | How we address it |
 |---|---|---|
-| **Technical Execution** | 40% | **Two AWS CDS services live at runtime** — Amazon SES and AWS End User Messaging (SMS), both provable via `scripts/send_live_cds.py` through the engine's own adapters (real AWS MessageIds); EUM RCS adapter validated against the botocore service model; WhatsApp via Meta Cloud API with **real Amazon Bedrock Nova Pro vision** triage; Bedrock AgentCore runtime deployed; DynamoDB persistence; SNS + Lambda + S3; least-privilege IAM; one-command CDK deploy; **48 automated tests, all passing**. |
+| **Technical Execution** | 40% | **Two AWS CDS services live at runtime** — Amazon SES and AWS End User Messaging (SMS), both provable via `scripts/send_live_cds.py` through the engine's own adapters (real AWS MessageIds); EUM RCS adapter validated against the botocore service model; WhatsApp via Meta Cloud API with **real Amazon Bedrock Nova Pro vision** triage; Bedrock AgentCore runtime deployed; DynamoDB persistence; SNS + Lambda + S3; least-privilege IAM; one-command CDK deploy; **56 automated tests, all passing**. |
 | **Potential Value/Impact** | 20% | Attacks the 40.7-day claims cycle with a measurable days-to-settle KPI. |
 | **Demo Presentation** | 20% | End-to-end agentic workflow (multimodal FNOL photo → vision triage → fan-out → tow/rental/repair → settlement) shown live, phone mirrored to the operator console in real time over SSE. |
 | **Creativity** | 10% | Multi-party commit gate + a **code-enforced human-in-the-loop approval gate** before any payout + multimodal (vision) FNOL — beyond the single-agent reference pattern, and directly answering the 2026 "human stays in control" governance requirement. |
@@ -130,7 +130,7 @@ sell a configured "Coordination Agent" per vertical.
 ```bash
 # Offline, no AWS needed — full FNOL -> settlement journey:
 make demo            # SIMULATE_CHANNELS=true python scripts/measure_e2e.py
-make test            # 48 unit/integration tests
+make test            # 56 unit/integration tests
 
 # Prove TWO AWS CDS services live at runtime (real SES + real EUM SMS via the
 # engine's own channel adapters; prints AWS MessageIds):

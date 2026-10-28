@@ -83,7 +83,7 @@ coordinated-outcome-engine/
 ├── zcaa/                    # "Zero-Call Accident Assist" — local demo API (stdlib) serving the UI + JSON/SSE
 ├── seed/                    # Demo data (policies, personas, scenario script)
 ├── scripts/                 # deploy, sync_agent_src, measure_e2e, prereqs helpers
-├── tests/                   # Unit + integration tests (48, all passing)
+├── tests/                   # Unit + integration tests (56, all passing)
 └── docs/                    # Architecture, demo script, pitch deck, submission text
 ```
 
@@ -109,7 +109,7 @@ Prerequisites and channel setup are documented in [`docs/PREREQUISITES.md`](docs
 ```bash
 # Timed FNOL -> settlement journey across 4 parties / 3 channels, fully simulated.
 make demo          # == SIMULATE_CHANNELS=true python scripts/measure_e2e.py
-make test          # run the 48 unit/integration tests
+make test          # run the 56 unit/integration tests
 ```
 
 ### Run the local UI + API
