@@ -1,8 +1,8 @@
 # Submission — One Touch Resolve (Insurance Claims Coordination Agent)
 
 **Hackathon:** AWS Communication Developer Services (CDS) Agentic AI Partner Hackathon — Sept. 2026
-**Repository:** _(add your GitHub/GitLab URL)_
-**Deployed project / how to interact:** _(add URL or interaction instructions)_
+**Repository:** https://github.com/faizan4devloper/one-touch-resolve
+**Deployed project / how to interact:** No public web URL (agent + channel backend). To interact: clone the repo and run `make demo` (offline FNOL→settlement journey) and `python3 scripts/send_live_cds.py` (fires a real Amazon SES email + real AWS End User Messaging SMS and prints the AWS MessageIds). For the live UI, `./start.sh` serves the customer phone app + operator dashboard. See the README "For judges / reviewers" section.
 **ACE Opportunity ID:** **O24826235** (AWS Partner Central · Marketing Campaign code "AWS CDS Agentic AI Hackathon - Sept. 2026")
 
 ---
