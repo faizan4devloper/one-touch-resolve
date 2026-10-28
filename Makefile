@@ -9,7 +9,7 @@ install:  ## Install Python deps + CDK node deps
 	pip install -r requirements.txt
 	cd infra && npm install
 
-test:  ## Run the unit + integration tests (42)
+test:  ## Run the unit + integration tests (56)
 	python -m pytest -q
 
 demo:  ## Run the full multi-party journey offline (timed simulation)
