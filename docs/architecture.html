@@ -92,6 +92,8 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
     <path d="M 256,300 V 360 H 285 V 392" stroke="#8795a4" stroke-width="2.4" marker-end="url(#mg)"/>
     <!-- SNS -> Dispatcher (grey, horizontal in ingest band) -->
     <path d="M 340,610 H 452" stroke="#8795a4" stroke-width="2.4" marker-end="url(#mg)"/>
+    <!-- Dispatcher -> S3 (grey: persist inbound FNOL media) -->
+    <path d="M 582,610 H 712" stroke="#8795a4" stroke-width="2.4" marker-end="url(#mg)"/>
     <!-- Dispatcher -> Supervisor (grey, down into core band) -->
     <path d="M 520,650 V 690 H 258 V 548" stroke="#8795a4" stroke-width="2.4" marker-end="url(#mg)"/>
 
@@ -105,6 +107,15 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
 
     <!-- ORANGE: Bedrock InvokeModel. tools down to bedrock -->
     <path d="M 1413,636 V 672 H 1505 V 688" stroke="#ED7100" stroke-width="2.2" marker-end="url(#mo)"/>
+    <!-- ORANGE dashed: S3 FNOL media read by Bedrock Nova vision. Routed up into
+         the clear gutter above the ingest nodes (y=362), across to the right
+         edge (x=1545), then down to Bedrock — crosses no nodes. -->
+    <path d="M 775,386 V 362 H 1545 V 740" stroke="#ED7100" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#mo)"/>
+
+    <!-- PURPLE: persist. tools -> coe-claims (data) -->
+    <path d="M 1390,636 V 700 H 300 V 724" stroke="#7d3ccf" stroke-width="2.2" marker-end="url(#mp)"/>
+    <!-- PURPLE: tools -> coe-fleet (atomic rental reservation, conditional write) -->
+    <path d="M 1415,636 V 716 H 1145 V 740" stroke="#7d3ccf" stroke-width="2.2" marker-end="url(#mp)"/>
 
     <!-- PURPLE: persist. tools -> coe-claims (data) -->
     <path d="M 1390,636 V 700 H 300 V 724" stroke="#7d3ccf" stroke-width="2.2" marker-end="url(#mp)"/>
@@ -126,7 +137,7 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
     <img src="assets/icons/whatsapp.svg" alt="WhatsApp">
     <div class="label">EUM Social</div><div class="small">WhatsApp — FNOL media</div><span class="svc">AWS End User Messaging Social</span>
   </div>
-  <div class="node" style="left:380px;top:240px;width:120px">
+  <div class="node" style="left:372px;top:240px;width:136px">
     <img src="assets/icons/rcs.svg" alt="RCS/SMS">
     <div class="label">EUM RCS / SMS</div><div class="small">cards · RCS→SMS fallback</div><span class="svc">AWS End User Messaging</span>
   </div>
@@ -211,6 +222,7 @@ svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
 
   <!-- flow chips -->
   <div class="chip blue" style="left:92px;top:404px">HTTPS inbound</div>
+  <div class="chip orange" style="left:1240px;top:348px">FNOL media → Nova vision</div>
   <div class="chip teal" style="left:1183px;top:586px">A2A</div>
   <div class="chip orange" style="left:1448px;top:665px">InvokeModel</div>
   <div class="chip purple" style="left:1452px;top:430px">outbound CDS</div>
