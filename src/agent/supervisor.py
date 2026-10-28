@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 from agent.tools import claim_tools
 from agent.tools import external_action
+from agent.tools import fleet_tools
 from agent.sub_agents import ALL_SUB_AGENTS
 
 SYSTEM_PROMPT = """You are the One Touch Resolve supervisor for insurance
@@ -30,18 +31,47 @@ each on the channel that suits them:
 Rules:
 - Never advance to settlement until the commit gate reports all required parties
   COMMITTED. Call evaluate_commit_gate to check.
+
+- CALL evaluate_commit_gate AT MOST ONCE PER STATE CHANGE. The gate is a pure
+  function of party statuses — calling it again WITHOUT having changed a party's
+  status in between will always return the identical result. Never poll it in a
+  loop. Only call evaluate_commit_gate right after you have taken an action that
+  could change a party's status (a commit, a new ETA, a fallback, or a re-plan
+  that resolves a block).
+
+- Resolving a BLOCKED party (this is a RE-PLAN, and it MUST change state):
+  When evaluate_commit_gate reports a party in `blocked`, that party will stay
+  blocked until YOU take a concrete action that changes its status. Pick ONE:
+    * parts back-ordered → re-source: call check_parts_eta again with an
+      expedited supplier/ETA (<= 2 days) so the parts party becomes COMMITTED,
+      OR commit_party on the alternative plan (e.g. approved used/aftermarket
+      part), AND arrange a courtesy car for the claimant by calling
+      reserve_rental (reserves a REAL vehicle from the managed fleet and messages
+      the claimant the details; if it returns reserved:false, open_external_ticket
+      and inform the claimant honestly — do not promise a car we don't have).
+    * repair shop unavailable → engage_party an alternative shop, then
+      commit_party once it confirms.
+  Also open_external_ticket so ops has the delay on record, and send_message to
+  keep the claimant proactively informed. THEN — and only then — call
+  evaluate_commit_gate ONE more time to confirm the block cleared.
+
+- ONE re-plan attempt per blocked party. If after your re-plan the SAME party is
+  still blocked, DO NOT evaluate the gate again: open_external_ticket for manual
+  handling, send_message to inform the claimant of the delay, and STOP. Report
+  that the claim is awaiting the blocked party; do not loop.
+
 - Money never moves without a human. Once the gate is open, call
   request_human_approval to send the adjuster an Approve/Hold card; only after a
   human decision is recorded as 'approved' (record_human_decision) may you call
   issue_settlement. If the decision is 'held' or 'denied', address the concern
   and re-request approval.
-- If a party is BLOCKED (e.g. parts back-ordered), RE-PLAN: offer an alternative
-  (such as a rental), keep the claimant proactively informed, and re-evaluate.
+
 - Preserve context across channels. If a channel degrades, continue on SMS with
   the same claim state.
-- When a party is BLOCKED or a delay needs ops tracking, open an external ticket
-  (open_external_ticket) so the operations system of record has it.
-- Be concise. Take actions with tools rather than describing them.
+- Be concise. Take actions with tools rather than describing them. Once you have
+  reached a terminal state for this turn (claim opened and you were asked to
+  stop, gate awaiting a party, approval requested, or settlement issued), STOP
+  and report — do not take further tool calls.
 """
 
 # The callable tools the agent may use. Reused by both the live Strands agent and
@@ -61,6 +91,12 @@ TOOLS: list[Callable[..., Any]] = [
     claim_tools.send_message,
     claim_tools.continue_on_fallback,
     external_action.open_external_ticket,
+    # Managed rental fleet — the concrete re-plan when a claimant is without a
+    # car (e.g. parts back-ordered): reserve a REAL vehicle, attach it to the
+    # claim, and inform the claimant. Honest by design (reserved:false if none).
+    fleet_tools.fleet_availability,
+    fleet_tools.reserve_rental,
+    fleet_tools.return_rental,
 ]
 
 

@@ -47,6 +47,17 @@ export class CoeStack extends cdk.Stack {
       timeToLiveAttribute: "ttl",
     });
 
+    // Managed rental fleet inventory. The agent reserves a real vehicle here
+    // (conditional write → no double-booking) when it re-plans a claim with a
+    // back-ordered part. Partition key `vehicle_id`.
+    const fleetTable = new dynamodb.Table(this, "FleetTable", {
+      tableName: "coe-fleet",
+      partitionKey: { name: "vehicle_id", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecovery: true,
+    });
+
     // ---- S3: inbound media (FNOL photos/video) --------------------------
     const mediaBucket = new s3.Bucket(this, "InboundMediaBucket", {
       bucketName: `coe-inbound-media-${this.account}-${this.region}`,
@@ -121,6 +132,7 @@ export class CoeStack extends cdk.Stack {
         SIMULATE_CHANNELS: "false",
         CLAIMS_TABLE_NAME: claimsTable.tableName,
         DEDUPE_TABLE_NAME: dedupeTable.tableName,
+        FLEET_TABLE_NAME: fleetTable.tableName,
         INBOUND_MEDIA_BUCKET: mediaBucket.bucketName,
         BEDROCK_MODEL_ID: "amazon.nova-pro-v1:0",
         // Populated post-deploy by scripts/deploy_agent.sh:
@@ -144,6 +156,7 @@ export class CoeStack extends cdk.Stack {
     // ---- Least-privilege IAM for the dispatcher -------------------------
     claimsTable.grantReadWriteData(dispatcher);
     dedupeTable.grantReadWriteData(dispatcher);
+    fleetTable.grantReadWriteData(dispatcher);
     // Inbound FNOL media (WhatsApp/RCS photos & video) is written on receipt and
     // read back by the agent for triage.
     mediaBucket.grantReadWrite(dispatcher);
@@ -226,6 +239,7 @@ export class CoeStack extends cdk.Stack {
       description: "Point your EUM Social WhatsApp inbound events at this topic.",
     });
     new cdk.CfnOutput(this, "ClaimsTableName", { value: claimsTable.tableName });
+    new cdk.CfnOutput(this, "FleetTableName", { value: fleetTable.tableName });
     new cdk.CfnOutput(this, "InboundMediaBucketName", {
       value: mediaBucket.bucketName,
     });
