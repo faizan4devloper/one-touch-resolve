@@ -6,7 +6,7 @@ Writes zcaa/web/qr.png and prints the URL.
 """
 import sys, qrcode
 from pathlib import Path
-url = sys.argv[1] if len(sys.argv) > 1 else "http://10.131.87.54:8095/"
+url = sys.argv[1] if len(sys.argv) > 1 else "http://<your-preview-host>/"
 img = qrcode.make(url)
 out = Path(__file__).resolve().parents[1] / "zcaa" / "web" / "qr.png"
 img.save(out)

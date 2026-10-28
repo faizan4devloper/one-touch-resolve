@@ -20,7 +20,7 @@ These are deliberately tiny and pure so they are unit-testable and auditable.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 
 class OutcomeNotVerified(RuntimeError):

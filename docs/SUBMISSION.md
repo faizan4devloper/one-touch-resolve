@@ -69,7 +69,7 @@ channel adapters (not the raw AWS CLI):
 python3 scripts/send_live_cds.py      # fires real SES + real EUM SMS via channels/*, prints MessageIds
 ```
 
-Example (account 040504913362, us-east-1):
+Example (account 123456789012, us-east-1):
 
 | CDS service | Adapter | Proof (AWS-returned MessageId) |
 |---|---|---|

@@ -16,7 +16,7 @@
       "runtimeVersion": "PYTHON_3_14",
       "networkMode": "PUBLIC",
       "protocol": "HTTP",
-      "executionRoleArn": "arn:aws:iam::040504913362:role/HCL-User-Role-Aiml-BedrockAgentCore-CodeBuild"
+      "executionRoleArn": "arn:aws:iam::123456789012:role/AgentCoreExecutionRole"
     }
   ],
   "memories": [
