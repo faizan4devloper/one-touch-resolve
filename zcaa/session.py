@@ -372,6 +372,22 @@ def dashboard_view(session_id: str) -> dict[str, Any]:
     if f.get("summary_email") or f.get("rental") or f.get("repair"):
         channels.add("email")
 
+    # Multi-party fan-out entry: once the agent has engaged more than just the
+    # claimant, surface a single "coordinated update" event that shows WHERE it
+    # went — each non-claimant party and the channel it was reached on. This
+    # makes the engine's core move (driving several parties at once) visible on
+    # the operator timeline rather than implied by the roster alone.
+    other_parties = [p for p in parties if p["role"] != "claimant"]
+    if len(other_parties) >= 2:
+        recipients = [{"role": p["role"], "channel": p["channel"]} for p in other_parties]
+        timeline.append({
+            "actor": "ZCAA Agent",
+            "kind": "fanout",
+            "text": f"Coordinated update fanned out to {len(recipients)} parties",
+            "channel": "",
+            "recipients": recipients,
+        })
+
     tow = tow_status(session_id) if f.get("tow") else {"active": False}
 
     return {

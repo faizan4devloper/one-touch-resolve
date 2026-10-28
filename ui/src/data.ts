@@ -27,7 +27,8 @@ export type StepKind =
   | "tow"
   | "rental"
   | "repair"
-  | "summary";
+  | "summary"
+  | "fanout";
 
 export interface Party {
   role: string;
@@ -37,11 +38,19 @@ export interface Party {
   note?: string;
 }
 
+export interface Recipient {
+  role: string;
+  channel: ChannelKind | "";
+}
+
 export interface TimelineItem {
   actor: string;
   kind: StepKind | string; // tolerate unknown kinds from the server
   text: string;
   channel: ChannelKind | "";
+  // For a multi-party fan-out (one update → several parties), the parties it
+  // went to and the channel each was reached on. Rendered as inline chips.
+  recipients?: Recipient[];
 }
 
 export interface Triage {

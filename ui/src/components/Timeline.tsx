@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import {
   FileImage, MousePointerClick, Radio, ShieldAlert, Truck, Car, Wrench,
-  Mail, Activity,
+  Mail, Activity, Send,
 } from "lucide-react";
 import type { StepKind, TimelineItem } from "../data";
 import { ChannelTag } from "./ChannelTag";
@@ -17,6 +17,7 @@ const KIND: Record<StepKind, KindStyle> = {
   rental: { Icon: Car, color: "var(--brand-2)", soft: "var(--brand-soft)", tag: "rental" },
   repair: { Icon: Wrench, color: "var(--ok)", soft: "var(--ok-soft)", tag: "repair" },
   summary: { Icon: Mail, color: "var(--brand-2)", soft: "var(--brand-soft)", tag: "summary" },
+  fanout: { Icon: Send, color: "var(--brand)", soft: "var(--brand-soft)", tag: "fan-out" },
 };
 
 const FALLBACK: KindStyle = {
@@ -74,6 +75,16 @@ export function Timeline({
                     {s.channel && <ChannelTag channel={s.channel} />}
                   </div>
                   <div className="tl-label">{s.text}</div>
+                  {s.recipients && s.recipients.length > 0 && (
+                    <div className="tl-recipients" aria-label="sent to">
+                      {s.recipients.map((r) => (
+                        <span className="tl-rcpt" key={r.role}>
+                          <span className="tl-rcpt-role">{r.role.replace(/_/g, " ")}</span>
+                          {r.channel && <ChannelTag channel={r.channel} compact />}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.li>
             );
